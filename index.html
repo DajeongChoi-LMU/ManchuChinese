@@ -158,8 +158,8 @@ function imageUrlFromCanvas(c, width = 1400){
   };
 
   // 1) service 기반(정석)
-  let base = pickServiceBase(body);
-  if (base) return `${base}/full/${width},/0/default.jpg?ts=${Date.now()}`;
+  let base = serviceBase(body);
+  if (base) return `${base}/full/${width},/0/default.jpg`;
 
   // 2) body가 완성 JPG일 때
   if (body?.id && /\.(jpg|jpeg|png)$/i.test(body.id)) return `${body.id}?ts=${Date.now()}`;
