@@ -3,17 +3,56 @@
   <title>Manchu–Chinese Digital Texts</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <style>
-    body {
-      font-family: serif;
-      margin: 40px;
-      max-width: 960px;
+<style>
+  body {
+    font-family: serif;
+    margin: 40px;
+    max-width: 1200px;
+  }
+
+  nav a {
+    margin-right: 12px;
+    text-decoration: none;
+  }
+
+  /* === 2-column layout === */
+  .split {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr; /* 왼쪽 PDF / 오른쪽 텍스트 */
+    gap: 20px;
+    min-height: 80vh;
+  }
+
+  .pane {
+    border: 1px solid #ccc;
+    padding: 12px;
+    overflow: auto;
+    background: #fff;
+  }
+
+  .pdf {
+    width: 100%;
+    height: calc(100vh - 220px);
+    border: none;
+  }
+
+  /* 오른쪽 텍스트 */
+  .parallel {
+    line-height: 1.8;
+    font-family: "Noto Sans Mongolian", "Mongolian Baiti", serif;
+  }
+
+  /* 모바일에서는 위아래로 */
+  @media (max-width: 900px) {
+    .split {
+      grid-template-columns: 1fr;
     }
-    nav a {
-      margin-right: 12px;
-      text-decoration: none;
+    .pdf {
+      height: 60vh;
     }
-  </style>
+  }
+</style>
+
 </head>
 <body>
 
@@ -249,7 +288,6 @@ fudzi i baimbi serengge<br/>
 
 niyalma baire ci encu akv semeo<br/>
 其諸異乎人之求之與<br/><br/>
-
 
 11<br/>
 fudzi hendume<br/>
