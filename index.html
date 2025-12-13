@@ -6,50 +6,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
-    body {
-      font-family: serif;
-      margin: 40px;
-      max-width: 1200px;
-    }
-
-    nav a {
-      margin-right: 12px;
-      text-decoration: none;
-    }
+    body { font-family: serif; margin: 40px; max-width: 1200px; }
+    nav a { margin-right: 12px; text-decoration: none; }
 
     /* === 2-column layout === */
     .split {
       display: grid;
-      grid-template-columns: 1.3fr 1fr; /* 왼쪽 PDF / 오른쪽 텍스트 */
+      grid-template-columns: 1.3fr 1fr; /* 왼쪽 이미지 / 오른쪽 텍스트 */
       gap: 20px;
       min-height: 80vh;
     }
-
     .pane {
       border: 1px solid #ccc;
       padding: 12px;
       overflow: auto;
       background: #fff;
     }
+    .pageimg { max-width: 100%; height: auto; display: block; }
 
-    .pdf {
-      width: 100%;
-      height: calc(100vh - 220px);
-      border: none;
-    }
-
-    /* 오른쪽 텍스트 */
+    /* 오른쪽 텍스트 영역 */
     .parallel {
       line-height: 1.8;
       font-family: "Noto Sans Mongolian", "Mongolian Baiti", serif;
-      /* 필요 시 세로쓰기 사용:
-         writing-mode: vertical-rl; text-orientation: mixed; */
+      white-space: pre-wrap; /* 엔터 그대로 줄바꿈 */
+      /* 만주어 세로쓰기 원하면 주석 해제
+      writing-mode: vertical-rl; text-orientation: mixed;
+      */
     }
 
-    /* 모바일에서는 위아래로 */
+    .toolbar { display: flex; align-items: center; gap: 10px; margin: 10px 0 16px; }
+    .btn { padding: 6px 10px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
+
     @media (max-width: 900px) {
       .split { grid-template-columns: 1fr; }
-      .pdf { height: 60vh; }
     }
   </style>
 </head>
@@ -65,376 +54,500 @@
 
 <h2 id="about">About</h2>
 <p>
-This pilot shows a side-by-side viewer: the PDF on the left and
-Manchu/Chinese/English text on the right.
+This pilot shows a synchronized IIIF viewer: the page image on the left and the corresponding text on the right.
 </p>
+
+<!-- ====== Toolbar (Prev/Next & Jump) ====== -->
+<div class="toolbar">
+  <button id="prevBtn" class="btn">◀ Prev</button>
+  <div>Page <span id="cur">1</span> / <span id="tot">–</span></div>
+  <button id="nextBtn" class="btn">Next ▶</button>
+  <select id="jump" class="btn" title="Jump to page"></select>
+</div>
 
 <!-- ========== 2-Column Split Viewer ========== -->
 <section id="viewer" class="split">
 
-  <!-- LEFT: PDF -->
+  <!-- LEFT: IIIF/JPG 이미지 -->
   <div class="pane left">
-    <iframe
-      src="manchuchinese0.pdf"
-      class="pdf"
-      title="Manchu–Chinese PDF">
-    </iframe>
+    <img id="img" class="pageimg" src="" alt="page image">
+    <p style="margin-top:8px;font-size:0.9em;color:#666;">
+      If the image does not load, open the source:
+      <a id="imgLink" href="#" target="_blank" rel="noopener">image URL</a>
+    </p>
   </div>
 
-  <!-- RIGHT: Manchu–Chinese parallel text -->
+  <!-- RIGHT: 동기화 텍스트 -->
   <div class="pane right">
-    <h2>Manchu–Chinese Parallel Text</h2>
-
-    <div class="parallel">
-leolen gisusen bithe  dergi<br/>
-論語 上<br/><br/>
-
-tacingga ujui fiyelen<br/>
-學而 第一<br/><br/>
-
-1<br/>
-fudzi hendume<br/>
-子曰<br/><br/> 
-
-tacimbime erinderi urebuci<br/>
-學而時習之<br/><br/> 
-
-inu urgun wakao<br/>
-不亦說乎<br/><br/>
-
-gucuse bifi goro jici<br/>
-有朋自遠方來<br/><br/> 
-
-inu sebjen wakao<br/>
-不亦樂乎<br/><br/>
-
-niyalma sarkv seme korsorakv oci<br/>
-人不知而不慍<br/><br/> 
-
-inu ambasa saisa wakao<br/>
-不亦君子乎<br/><br/>
-
-2<br/>
-iodzi hendume<br/>
-有子曰<br/><br/> 
-
-terei yabun hiyooxun deocin bime<br/>
-其爲人也孝弟<br/><br/> 
-
-dergi be necire de amurangge komso dere<br/> 
-而好犯上者鮮矣<br/><br/> 
-
-dergi be necire de amuran akv bime<br/>
-不好犯上<br/><br/> 
-
-facuhvn be deribure de amurangga akv kai<br/> 
-而好作亂者 未之有也<br/><br/>
-
-ambasa saisa fulehe be kicembi<br/>
-君子務本<br/><br/>
-
-fulehe ilici doro banjinambi<br/>
-本立而道生<br/><br/>
-
-hiyooxun deocin serengge<br/> 
-孝弟也者<br/><br/> 
-
-tere gosin be yabure fulehe dere<br/>
-其爲仁之本與<br/><br/>
-
-3<br/>
-fudzi hendume<br/>
-子曰<br/><br/> 
-
-faksi gisun araha cira de<br/>
-巧言令色<br/><br/>
-
-gosin komso dere<br/>
-鮮矣仁<br/><br/>
-
-4<br/>
-dzengdzi hendume<br/>
-曾子曰<br/><br/> 
-
-bi inenggideri ilan hacin be mini beyede kimcimbi<br/>
-吾日三省吾身<br/><br/> 
-
-niyalmai jalin bodoro de tondo akv ayoo<br/>
-爲人謀而不忠乎<br/><br/> 
-
-gucu gargan i baru guculere de akdun akv ayoo<br/>
-與朋友交而不信乎<br/><br/>
-
-ulahangge be ureburakv ayoo<br/>
-傳不習乎<br/><br/>
-
-5<br/>
-fudzi hendume<br/>
-子曰<br/><br/> 
-
-minggan sejengge gurun be dasara de<br/>
-道千乘之國<br/><br/> 
-
-baita be ginggulembime akdun oso<br/>
-敬事而信<br/><br/> 
-
-kemneme niyalma be gosi<br/>
-節用而愛人<br/><br/> 
-
-irgen be takvrara de erile<br/>
-使民以時<br/><br/>
-
-6<br/>
-fudzi hendume<br/>
-子曰<br/><br/>
-
-deote juse dosici hiyooxula<br/>
-弟子入則孝<br/><br/>
-
-tucici deocile<br/>
-出則弟<br/><br/>
-
-ginggulembime akdun oso<br/>
-謹而信<br/><br/> 
-
-geren be gemu gosimbime<br/>
-汎愛衆<br/><br/> 
-
-gosingga de hajila<br/> 
-而親仁<br/><br/> 
-
-yabume funcehe hvsun de<br/>
-行有餘力<br/><br/> 
-
-xu be taci<br/>
-則以學文<br/><br/>
-
-7<br/>
-dzi hiya hendume<br/>
-子夏曰<br/><br/> 
-
-sain be saixara de boco de amuran be guribure<br/>
-賢賢易色<br/><br/> 
-
-ama eme be uilere de hvsun be akvmbume mutere<br/>
-事父母能竭其力<br/><br/> 
-
-ejen be uilere de beyebe waliyatai obume mutere<br/>
-事君能致其身<br/><br/> 
-
-gucu gargan i baru guculere de gisun akdun ojoro ohode<br/>
-與朋友交言而有信<br/><br/> 
-
-udu tacihakv sehe seme<br/>
-雖曰未學<br/><br/> 
-
-bi urunakv tacihabi sembi<br/>
-吾必謂之學矣<br/><br/>
-
-8<br/>
-fudzi hendum<br/>
-子曰<br/><br/> 
-
-ambasa saisa ujen akv oci horon akv<br/>
-君子不重則不威<br/><br/> 
-
-taciha seme beki akv<br/>
-學則不固<br/><br/>
-
-tondo akdun be da obu<br/>
-主忠信<br/><br/>
-
-beye de isirakvngge de ume guculere<br/>
-無友不如己者<br/><br/>
-
-endebuhe be halara de ume sengguwendere<br/>
-過則勿憚改<br/><br/>
-
-9<br/>
-dzengdzi hendume<br/>
-曾子曰<br/><br/>
-
-duben be olhoxoro goro be amcara oci<br/>
-愼終追遠<br/><br/>
-
-irgen i erdemu jiramin de dahvmbidere<br/>
-民德歸厚矣<br/><br/>
-
-10<br/>
-子禽問於子貢曰<br/> 
-dzi kin dzi gung de fonjime<br/><br/>
-
-fudzi yaya gurun de isinaha de<br/>
-夫子 至於是邦也<br/><br/>
-
-urunakv terei dasan be donjirengge<br/>
-必聞其政<br/><br/> 
-
-baire de bio<br/>
-求之與<br/><br/>
-
-eici alara de bio<br/> 
-抑與之與<br/><br/>
-
-dzi gung hendume<br/>
-子貢曰<br/><br/> 
-
-fudzi nemgiyen nesuken gungnecuke boljonggo anahvnjan de bahabi<br/>
-夫子 溫良恭儉讓以得之<br/><br/> 
-
-fudzi i baimbi serengge<br/>
-夫子之求之也<br/><br/>
-
-niyalma baire ci encu akv semeo<br/>
-其諸異乎人之求之與<br/><br/>
-
-11<br/>
-fudzi hendume<br/>
-子曰<br/><br/> 
-
-ama bisire de terei mujin be tuwambi<br/>
-父在 觀其志<br/><br/>
-
-ama akv oho de terei yabun be tuwambi<br/>
-父沒 觀其行<br/><br/>
-
-ilan aniya otolo ama i doro be halarakv oci<br/>
-三年 無改於父之道<br/><br/>
-
-hiyooxungga seci ombidere<br/>
-可謂孝矣<br/><br/>
-
-12<br/>
-iodzi hendume<br/>
-有子曰<br/><br/> 
-
-dorolon i baitalan de<br/>
-禮之用<br/><br/>
-
-hvwaliyasun wesibun<br/> 
-和爲貴<br/><br/> 
-
-nenehe han sai doro<br/>
-先王之道<br/><br/> 
-
-erebe sain obufi<br/>
-斯爲美<br/><br/>
-
-amba ajige songkolohobi<br/>
-小大由之<br/><br/>
-
-yabuci ojorakv ba bisirengge<br/>
-有所不行<br/><br/>
-
-hvwaliyasun be same hvwaliyacibe<br/> 
-知和而和<br/><br/> 
-
-dorolon i kemnerakv oci<br/>
-不以禮節之<br/><br/> 
-
-inu yabuci ojorakv kai<br/>
-亦不可行也<br/><br/>
-
-13<br/>
-iodzi hendume<br/>
-有子曰<br/><br/>
-
-akdun ojorongge jurgan de hanci oci<br/>
-信近於義<br/><br/> 
-
-gisun be dahvci ombi<br/>
-言可復也<br/><br/> 
-
-kundulerengge dorolon de hanci oci<br/>
-恭近於禮<br/><br/> 
-
-yertecun girucun aldangga ombi<br/>
-遠恥辱也<br/><br/>
-
-daharangge hajilara be ufararakv oci<br/>
-因不失其親<br/><br/> 
-
-inu da obuci ombikai<br/>
-亦可宗也<br/><br/>
-
-14<br/>
-fudzi hendume<br/>
-子曰<br/><br/> 
-
-ambasa saisa jetere de ebire be bairakv<br/> 
-君子 食無求飽<br/><br/> 
-
-tere de elhe be bairakv<br/>
-居無求安<br/><br/> 
-
-baita de kicembime gisun de olhoxoro<br/>
-敏於事而愼於言<br/><br/> 
-
-doro bisirengge de baihanafi tuwancihiyaburengge<br/>
-就有道而正焉<br/><br/> 
-
-tacire de amuran seci ombikai<br/>
-可謂好學也已<br/><br/>
-
-15<br/>
-dzi gung hendume<br/>
-子貢曰<br/><br/>
-
-yadahvn bime haldaba akv<br/>
-貧而無諂<br/><br/>
-
-bayan bime cokto akvngge<br/>
-富而無驕<br/><br/> 
-
-antaka fudzi hendume<br/>
-何如 子曰<br/><br/>
-
-ombi<br/>
-可也<br/><br/>
-
-yadahvn bime sebjengge<br/>
-未若貧而樂<br/><br/> 
-
-bayan bime dorolon de amurangge de isirekv<br/>
-富而好禮者也<br/><br/>
-
-dzi gung hendume<br/>
-子貢曰<br/><br/>
-
-irgebun i umun de<br/> 
-詩云<br/><br/> 
-
-faitara gese mudure gese<br/>
-如切如磋<br/><br/> 
-
-foloro gese nilara gese sehengge<br/>
-如琢如磨<br/><br/>
-
-tere enteke be henduhebi dere<br/>
-其斯之謂與<br/><br/>
-
-fudzi hendume<br/>
-子曰<br/><br/> 
-
-sya de teni emgi irgebun be gisureci ombi<br/>
-賜也 始可與言詩已矣<br/><br/>
-
-dulekengge be alara de jiderengge be sahabi<br/>
-告諸往而知來者<br/><br/>
-
-16<br/>
-dzi hendume<br/>
-子曰<br/><br/>
-
-bayaba niyalma sarkv de joborakv<br/>
-不患人之不己知<br/><br/> 
-
-niyalma be sarakv de jobombi<br/>
-患不知人也<br/><br/>
-    </div>
+    <h2 id="pagelabel">Page</h2>
+    <div id="text" class="parallel"></div>
   </div>
 
 </section>
+
+<script>
+/* ===== 1) 여기에 IIIF Manifest 경로 지정 (레포 루트에 올리신 파일명 그대로) ===== */
+const MANIFEST_URL = "3306131067.manifest.json";
+
+/* ===== 2) 페이지별 텍스트(인덱스 = 페이지번호-1). 필요시 계속 추가 =====
+   지금은 1쪽에 현재 가지고 계신 큰 텍스트를 임시로 넣어두었습니다.
+   나중에 페이지별로 쪼개서 pageTexts[0], pageTexts[1] ... 식으로 채워 주세요.
+*/
+const pageTexts = [
+`leolen gisusen bithe  dergi
+論語 上
+
+tacingga ujui fiyelen
+學而 第一
+
+1
+fudzi hendume
+子曰
+
+tacimbime erinderi urebuci
+學而時習之
+
+inu urgun wakao
+不亦說乎
+
+gucuse bifi goro jici
+有朋自遠方來
+
+inu sebjen wakao
+不亦樂乎
+
+niyalma sarkv seme korsorakv oci
+人不知而不慍
+
+inu ambasa saisa wakao
+不亦君子乎
+
+2
+iodzi hendume
+有子曰
+
+terei yabun hiyooxun deocin bime
+其爲人也孝弟
+
+dergi be necire de amurangge komso dere
+而好犯上者鮮矣
+
+dergi be necire de amuran akv bime
+不好犯上
+
+facuhvn be deribure de amurangga akv kai
+而好作亂者 未之有也
+
+ambasa saisa fulehe be kicembi
+君子務本
+
+fulehe ilici doro banjinambi
+本立而道生
+
+hiyooxun deocin serengge
+孝弟也者
+
+tere gosin be yabure fulehe dere
+其爲仁之本與
+
+3
+fudzi hendume
+子曰
+
+faksi gisun araha cira de
+巧言令色
+
+gosin komso dere
+鮮矣仁
+
+4
+dzengdzi hendume
+曾子曰
+
+bi inenggideri ilan hacin be mini beyede kimcimbi
+吾日三省吾身
+
+niyalmai jalin bodoro de tondo akv ayoo
+爲人謀而不忠乎
+
+gucu gargan i baru guculere de akdun akv ayoo
+與朋友交而不信乎
+
+ulahangge be ureburakv ayoo
+傳不習乎
+
+5
+fudzi hendume
+子曰
+
+minggan sejengge gurun be dasara de
+道千乘之國
+
+baita be ginggulembime akdun oso
+敬事而信
+
+kemneme niyalma be gosi
+節用而愛人
+
+irgen be takvrara de erile
+使民以時
+
+6
+fudzi hendume
+子曰
+
+deote juse dosici hiyooxula
+弟子入則孝
+
+tucici deocile
+出則弟
+
+ginggulembime akdun oso
+謹而信
+
+geren be gemu gosimbime
+汎愛衆
+
+gosingga de hajila
+而親仁
+
+yabume funcehe hvsun de
+行有餘力
+
+xu be taci
+則以學文
+
+7
+dzi hiya hendume
+子夏曰
+
+sain be saixara de boco de amuran be guribure
+賢賢易色
+
+ama eme be uilere de hvsun be akvmbume mutere
+事父母能竭其力
+
+ejen be uilere de beyebe waliyatai obume mutere
+事君能致其身
+
+gucu gargan i baru guculere de gisun akdun ojoro ohode
+與朋友交言而有信
+
+udu tacihakv sehe seme
+雖曰未學
+
+bi urunakv tacihabi sembi
+吾必謂之學矣
+
+8
+fudzi hendum
+子曰
+
+ambasa saisa ujen akv oci horon akv
+君子不重則不威
+
+taciha seme beki akv
+學則不固
+
+tondo akdun be da obu
+主忠信
+
+beye de isirakvngge de ume guculere
+無友不如己者
+
+endebuhe be halara de ume sengguwendere
+過則勿憚改
+
+9
+dzengdzi hendume
+曾子曰
+
+duben be olhoxoro goro be amcara oci
+愼終追遠
+
+irgen i erdemu jiramin de dahvmbidere
+民德歸厚矣
+
+10
+子禽問於子貢曰
+dzi kin dzi gung de fonjime
+
+fudzi yaya gurun de isinaha de
+夫子 至於是邦也
+
+urunakv terei dasan be donjirengge
+必聞其政
+
+baire de bio
+求之與
+
+eici alara de bio
+抑與之與
+
+dzi gung hendume
+子貢曰
+
+fudzi nemgiyen nesuken gungnecuke boljonggo anahvnjan de bahabi
+夫子 溫良恭儉讓以得之
+
+fudzi i baimbi serengge
+夫子之求之也
+
+niyalma baire ci encu akv semeo
+其諸異乎人之求之與
+
+11
+fudzi hendume
+子曰
+
+ama bisire de terei mujin be tuwambi
+父在 觀其志
+
+ama akv oho de terei yabun be tuwambi
+父沒 觀其行
+
+ilan aniya otolo ama i doro be halarakv oci
+三年 無改於父之道
+
+hiyooxungga seci ombidere
+可謂孝矣
+
+12
+iodzi hendume
+有子曰
+
+dorolon i baitalan de
+禮之用
+
+hvwaliyasun wesibun
+和爲貴
+
+nenehe han sai doro
+先王之道
+
+erebe sain obufi
+斯爲美
+
+amba ajige songkolohobi
+小大由之
+
+yabuci ojorakv ba bisirengge
+有所不行
+
+hvwaliyasun be same hvwaliyacibe
+知和而和
+
+dorolon i kemnerakv oci
+不以禮節之
+
+inu yabuci ojorakv kai
+亦不可行也
+
+13
+iodzi hendume
+有子曰
+
+akdun ojorongge jurgan de hanci oci
+信近於義
+
+gisun be dahvci ombi
+言可復也
+
+kundulerengge dorolon de hanci oci
+恭近於禮
+
+yertecun girucun aldangga ombi
+遠恥辱也
+
+daharangge hajilara be ufararakv oci
+因不失其親
+
+inu da obuci ombikai
+亦可宗也
+
+14
+fudzi hendume
+子曰
+
+ambasa saisa jetere de ebire be bairakv
+君子 食無求飽
+
+tere de elhe be bairakv
+居無求安
+
+baita de kicembime gisun de olhoxoro
+敏於事而愼於言
+
+doro bisirengge de baihanafi tuwancihiyaburengge
+就有道而正焉
+
+tacire de amuran seci ombikai
+可謂好學也已
+
+15
+dzi gung hendume
+子貢曰
+
+yadahvn bime haldaba akv
+貧而無諂
+
+bayan bime cokto akvngge
+富而無驕
+
+antaka fudzi hendume
+何如 子曰
+
+ombi
+可也
+
+yadahvn bime sebjengge
+未若貧而樂
+
+bayan bime dorolon de amurangge de isirekv
+富而好禮者也
+
+dzi gung hendume
+子貢曰
+
+irgebun i umun de
+詩云
+
+faitara gese mudure gese
+如切如磋
+
+foloro gese nilara gese sehengge
+如琢如磨
+
+tere enteke be henduhebi dere
+其斯之謂與
+
+fudzi hendume
+子曰
+
+sya de teni emgi irgebun be gisureci ombi
+賜也 始可與言詩已矣
+
+dulekengge be alara de jiderengge be sahabi
+告諸往而知來者
+
+16
+dzi hendume
+子曰
+
+bayaba niyalma sarkv de joborakv
+不患人之不己知
+
+niyalma be sarakv de jobombi
+患不知人也`
+];
+
+/* ===== 3) IIIF manifest 불러오기 & 이미지 URL 생성 ===== */
+async function loadManifest(url){
+  const res = await fetch(url, { cache: "no-store" });
+  if(!res.ok) throw new Error("Manifest fetch failed");
+  return await res.json();
+}
+
+function getCanvases(manifest){
+  // IIIF v3
+  if (Array.isArray(manifest.items) && manifest.items.length) return manifest.items;
+  // IIIF v2
+  if (manifest.sequences && manifest.sequences[0] && manifest.sequences[0].canvases) {
+    return manifest.sequences[0].canvases;
+  }
+  throw new Error("No canvases found in manifest");
+}
+
+function canvasLabel(c){
+  const lbl = c.label;
+  if (typeof lbl === "string") return lbl;
+  if (lbl && lbl.none && lbl.none[0]) return lbl.none[0];
+  if (lbl && lbl.en && lbl.en[0]) return lbl.en[0];
+  return c.id || c['@id'] || "Page";
+}
+
+function imageUrlFromCanvas(c, width=1400){
+  try {
+    // v3 typical
+    const ap = c.items[0];
+    const ann = ap.items[0];
+    const body = ann.body;
+    const svc = Array.isArray(body.service) ? body.service[0] : body.service;
+    let base = (svc && (svc.id || svc['@id'])) || body.id || body['@id'];
+    if (!base) throw new Error("no service/id");
+    base = base.replace(/\/info\.json$/,'');
+    return `${base}/full/${width},/0/default.jpg`;
+  } catch(e){
+    // v2 fallback
+    const img = c.images && c.images[0] && c.images[0].resource;
+    const svc = img && img.service && (img.service['@id'] || img.service.id);
+    if (svc) return `${svc.replace(/\/info\.json$/,'')}/full/${width},/0/default.jpg`;
+    if (img && (img['@id'] || img.id)) return img['@id'] || img.id;
+    console.warn("IIIF image resolve failed for canvas", c);
+    return "";
+  }
+}
+
+/* ===== 4) 렌더링 ===== */
+let canvases = [];
+let idx = 0;
+
+const imgEl   = document.getElementById("img");
+const linkEl  = document.getElementById("imgLink");
+const textEl  = document.getElementById("text");
+const labelEl = document.getElementById("pagelabel");
+const curEl   = document.getElementById("cur");
+const totEl   = document.getElementById("tot");
+const jumpEl  = document.getElementById("jump");
+
+function render(){
+  const c = canvases[idx];
+  const url = imageUrlFromCanvas(c);
+  imgEl.src = url;
+  linkEl.href = url;
+  labelEl.textContent = canvasLabel(c);
+  textEl.textContent = pageTexts[idx] ?? ""; // 해당 페이지 텍스트가 없으면 빈칸
+  curEl.textContent = String(idx + 1);
+  jumpEl.value = String(idx);
+}
+
+function fillJump(){
+  jumpEl.innerHTML = "";
+  canvases.forEach((c, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = `${i+1}. ${canvasLabel(c)}`;
+    jumpEl.appendChild(opt);
+  });
+}
+
+/* ===== 5) 이벤트 ===== */
+document.getElementById("prevBtn").onclick = () => { idx = (idx - 1 + canvases.length) % canvases.length; render(); };
+document.getElementById("nextBtn").onclick = () => { idx = (idx + 1) % canvases.length; render(); };
+jumpEl.onchange = e => { idx = parseInt(e.target.value, 10); render(); };
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft")  document.getElementById("prevBtn").click();
+  if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
+});
+
+/* ===== 6) 초기화 ===== */
+(async function init(){
+  try {
+    const manifest = await loadManifest(MANIFEST_URL);
+    canvases = getCanvases(manifest);
+    totEl.textContent = String(canvases.length);
+    // pageTexts가 canvases보다 짧아도 동작하도록 빈칸 채우기
+    if (pageTexts.length < canvases.length) {
+      while (pageTexts.length < canvases.length) pageTexts.push("");
+    }
+    fillJump();
+    render();
+  } catch(err){
+    console.error(err);
+    alert("IIIF manifest를 불러오지 못했습니다. 파일 경로/이름을 확인하세요.");
+  }
+})();
+</script>
 
 </body>
 </html>
