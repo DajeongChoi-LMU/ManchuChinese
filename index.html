@@ -138,43 +138,41 @@ function canvasLabel(c){
   return c.id || c['@id'] || "Page";
 }
 
-/* ===== 4) 견고한 IIIF 이미지 URL 생성 + 캐시버스터 ===== */
 function imageUrlFromCanvas(c, width = 1400){
   // v3: AnnotationPage → Annotation → body
   let body = null;
   try {
     const ap  = c.items?.[0];
     const ann = ap?.items?.[0];
-    body = ann?.body;
-    if (Array.isArray(body)) body = body[0]; // Choice 대응
+    body = Array.isArray(ann?.body) ? ann.body[0] : ann?.body; // Choice 대응
   } catch(_) {}
 
   const pickServiceBase = (obj) => {
     if (!obj) return null;
     const svc = Array.isArray(obj.service) ? obj.service[0] : obj.service;
-    let base = svc?.id || svc?.['@id'];
+    let base = svc?.id || svc?.['@id'] || null;
     if (base && /\/info\.json$/.test(base)) base = base.replace(/\/info\.json$/, '');
-    return base || null;
+    return base;
   };
 
-  // 1) service 기반(정석)
-  let base = serviceBase(body);
+  // 1) service 기반(정석) — 쿼리스트링 절대 붙이지 않음!
+  let base = pickServiceBase(body);
   if (base) return `${base}/full/${width},/0/default.jpg`;
 
-  // 2) body가 완성 JPG일 때
-  if (body?.id && /\.(jpg|jpeg|png)$/i.test(body.id)) return `${body.id}?ts=${Date.now()}`;
+  // 2) body가 완성 이미지 파일이면 그대로 사용 (쿼리 금지)
+  if (body?.id && /\.(jpe?g|png)$/i.test(body.id)) return body.id;
 
   // 3) v2 fallback
   const img = c.images?.[0]?.resource;
   if (img) {
     const base2 = pickServiceBase(img);
-    if (base2) return `${base2}/full/${width},/0/default.jpg?ts=${Date.now()}`;
+    if (base2) return `${base2}/full/${width},/0/default.jpg`;
     const direct = img['@id'] || img.id;
-    if (direct && /\.(jpg|jpeg|png)$/i.test(direct)) return `${direct}?ts=${Date.now()}`;
+    if (direct && /\.(jpe?g|png)$/i.test(direct)) return direct;
   }
 
-  // 4) 이미 완성된 Image API 경로가 들어온 경우
-  if (body?.id && /\/full\//.test(body.id)) return `${body.id}?ts=${Date.now()}`;
+  // 4) 이미 완성된 Image API 경로가 있는 경우
+  if (body?.id && /\/full\//.test(body.id)) return body.id;
 
   console.warn("IIIF image resolve failed for canvas", c);
   return "";
