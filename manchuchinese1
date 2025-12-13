@@ -1,13 +1,17 @@
 <h2 id="sample">Sample Text</h2>
-
 <p>
 Below is a sample Manchu–Chinese bilingual document.
 The PDF is displayed directly on the page.
 </p>
 
 <iframe 
-  src="manchuchinese1.pdf"
+  src="manchuchinese1.pdf?v=1"
   width="100%"
   height="700px"
   style="border: 1px solid #ccc;">
 </iframe>
+
+<p style="margin-top:8px;">
+  If the PDF does not display, 
+  <a href="manchuchinese1.pdf" target="_blank">open it in a new tab</a>.
+</p>
