@@ -72,19 +72,7 @@ const MANIFEST_URL = `${BASE}3306131067.manifest.json?v=2`;
 // ================================
 // 라벨→전사 텍스트 매핑
 // ================================
-const textsByLabel = {
-  "上:1r [163]": `leolen gisusen bithe  dergi<br/>
-論語 上<br/><br/>
-tacingga ujui fiyelen<br/>
-學而 第一<br/><br/>
-... 이하 생략 ...`,
-
-  "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/>
-而好作亂者 未之有也<br/><br/>
-... 이하 생략 ...`
-};
-
-const pageTexts = [];
+const textsByLabel = { "上:1r [163]": leolen gisusen bithe dergi<br/> 論語 上<br/><br/> tacingga ujui fiyelen<br/> 學而 第一<br/><br/> 1<br/> fudzi hendume<br/> 子曰<br/><br/> tacimbime erinderi urebuci<br/> 學而時習之<br/><br/> inu urgun wakao<br/> 不亦說乎<br/><br/> gucuse bifi goro jici<br/> 有朋自遠方來<br/><br/> inu sebjen wakao<br/> 不亦樂乎<br/><br/> niyalma sarkv seme korsorakv oci<br/> 人不知而不慍<br/><br/> inu ambasa saisa wakao<br/> 不亦君子乎<br/><br/> 2<br/> iodzi hendume<br/> 有子曰<br/><br/> terei yabun hiyooxun deocin bime<br/> 其爲人也孝弟<br/><br/> dergi be necire de amurangge komso dere<br/> 而好犯上者鮮矣<br/><br/> dergi be necire de amuran akv bime<br/> 不好犯上<br/><br/>, "上:1v [164]": facuhvn be deribure de amurangga akv kai<br/> 而好作亂者 未之有也<br/><br/> ambasa saisa fulehe be kicembi<br/> 君子務本<br/><br/> fulehe ilici doro banjinambi<br/> 本立而道生<br/><br/> hiyooxun deocin serengge<br/> 孝弟也者<br/><br/> tere gosin be yabure fulehe dere<br/> 其爲仁之本與<br/><br/> 3<br/> fudzi hendume<br/> 子曰<br/><br/> faksi gisun araha cira de<br/> 巧言令色<br/><br/> gosin komso dere<br/> 鮮矣仁<br/><br/> 4<br/> dzengdzi hendume<br/> 曾子曰<br/><br/> bi inenggideri ilan hacin be mini beyede kimcimbi<br/> 吾日三省吾身<br/><br/> niyalmai jalin bodoro de tondo akv ayoo<br/> 爲人謀而不忠乎<br/><br/> };
 
 
 // ================================
