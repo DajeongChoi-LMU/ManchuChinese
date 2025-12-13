@@ -53,97 +53,88 @@ This pilot shows a synchronized IIIF viewer: the page image on the left and the 
   </div>
 </section>
 
-
-
 <script>
-// ================================
-// BASE PATH 검출 (GitHub Pages 대응)
-// ================================
+// BASE PATH (GitHub Pages 대응)
 const BASE = (function () {
   let p = location.pathname;
   if (!p.endsWith('/')) p += '/';
   return p;
 })();
 
-// IIIF manifest 위치
+// IIIF manifest 경로
 const MANIFEST_URL = `${BASE}3306131067.manifest.json?v=2`;
 
+// ✅ 배열 기반 전사(없어도 최소 선언)
+const pageTexts = [];
 
-// ================================
-// 라벨→전사 텍스트 매핑
-// ================================
-const textsByLabel = { "上:1r [163]": `leolen gisusen bithe dergi<br/> 
-  論語 上<br/><br/> 
-  
-  tacingga ujui fiyelen<br/> 
-  學而 第一<br/><br/> 
-  1<br/> 
-  fudzi hendume<br/> 
-  子曰<br/><br/> 
-  tacimbime erinderi urebuci<br/> 
-  學而時習之<br/><br/> 
-  inu urgun wakao<br/> 
-  不亦說乎<br/><br/>
-  gucuse bifi goro jici<br/> 
-  有朋自遠方來<br/><br/> 
-  inu sebjen wakao<br/> 
-  不亦樂乎<br/><br/> 
-  niyalma sarkv seme korsorakv oci<br/> 
-  人不知而不慍<br/><br/> 
-  inu ambasa saisa wakao<br/> 
-  不亦君子乎<br/><br/> 
-  2<br/> 
-  iodzi hendume<br/> 
-  有子曰<br/><br/> 
-  terei yabun hiyooxun deocin bime<br/> 
-  其爲人也孝弟<br/><br/> 
-  dergi be necire de amurangge komso dere<br/> 
-  而好犯上者鮮矣<br/><br/> 
-  dergi be necire de amuran akv bime<br/> 
-  不好犯上<br/><br/>`, 
-  "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/> 
-  而好作亂者 未之有也<br/><br/> 
-  ambasa saisa fulehe be kicembi<br/> 
-  君子務本<br/><br/> 
-  fulehe ilici doro banjinambi<br/> 
-  本立而道生<br/><br/> 
-  hiyooxun deocin serengge<br/> 
-  孝弟也者<br/><br/> 
-  tere gosin be yabure fulehe dere<br/> 
-  其爲仁之本與<br/><br/> 
-  3<br/> 
-  fudzi hendume<br/> 
-  子曰<br/><br/> 
-  faksi gisun araha cira de<br/> 
-  巧言令色<br/><br/> 
-  gosin komso dere<br/> 
-  鮮矣仁<br/><br/> 
-  4<br/> 
-  dzengdzi hendume<br/> 
-  曾子曰<br/><br/> 
-  bi inenggideri ilan hacin be mini beyede kimcimbi<br/> 
-  吾日三省吾身<br/><br/> 
-  niyalmai jalin bodoro de tondo akv ayoo<br/> 
-  爲人謀而不忠乎<br/><br/>` 
-  };
+// ✅ 라벨→전사 텍스트 (값을 반드시 `...` 로 감싼 문자열로!)
+const textsByLabel = {
+  "上:1r [163]": `leolen gisusen bithe dergi<br/>
+論語 上<br/><br/>
+tacingga ujui fiyelen<br/>
+學而 第一<br/><br/>
+1<br/>
+fudzi hendume<br/>
+子曰<br/><br/>
+tacimbime erinderi urebuci<br/>
+學而時習之<br/><br/>
+inu urgun wakao<br/>
+不亦說乎<br/><br/>
+gucuse bifi goro jici<br/>
+有朋自遠方來<br/><br/>
+inu sebjen wakao<br/>
+不亦樂乎<br/><br/>
+niyalma sarkv seme korsorakv oci<br/>
+人不知而不慍<br/><br/>
+inu ambasa saisa wakao<br/>
+不亦君子乎<br/><br/>
+2<br/>
+iodzi hendume<br/>
+有子曰<br/><br/>
+terei yabun hiyooxun deocin bime<br/>
+其爲人也孝弟<br/><br/>
+dergi be necire de amurangge komso dere<br/>
+而好犯上者鮮矣<br/><br/>
+dergi be necire de amuran akv bime<br/>
+不好犯上<br/><br/>`,
 
-const pageText = []; 
+  "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/>
+而好作亂者 未之有也<br/><br/>
+ambasa saisa fulehe be kicembi<br/>
+君子務本<br/><br/>
+fulehe ilici doro banjinambi<br/>
+本立而道生<br/><br/>
+hiyooxun deocin serengge<br/>
+孝弟也者<br/><br/>
+tere gosin be yabure fulehe dere<br/>
+其爲仁之本與<br/><br/>
+3<br/>
+fudzi hendume<br/>
+子曰<br/><br/>
+faksi gisun araha cira de<br/>
+巧言令色<br/><br/>
+gosin komso dere<br/>
+鮮矣仁<br/><br/>
+4<br/>
+dzengdzi hendume<br/>
+曾子曰<br/><br/>
+bi inenggideri ilan hacin be mini beyede kimcimbi<br/>
+吾日三省吾身<br/><br/>
+niyalmai jalin bodoro de tondo akv ayoo<br/>
+爲人謀而不忠乎<br/><br/>`
+};
 
-// ================================
-// IIIF manifest 불러오기
-// ================================
+// IIIF manifest 로딩/파싱
 async function loadManifest(url){
   const res = await fetch(url, { cache: "no-store" });
   if(!res.ok) throw new Error(`Manifest fetch failed: ${res.status}`);
   return await res.json();
 }
-
 function getCanvases(manifest){
   if (Array.isArray(manifest.items)) return manifest.items;  // v3
   if (manifest.sequences?.[0]?.canvases) return manifest.sequences[0].canvases; // v2
   throw new Error("No canvases found");
 }
-
 function canvasLabel(c){
   const lbl = c.label;
   if (typeof lbl === "string") return lbl;
@@ -151,7 +142,6 @@ function canvasLabel(c){
   if (lbl?.en?.[0]) return lbl.en[0];
   return "Page";
 }
-
 function imageUrlFromCanvas(c, width=1400){
   try {
     const body = c.items[0].items[0].body;
@@ -164,10 +154,7 @@ function imageUrlFromCanvas(c, width=1400){
   }
 }
 
-
-// ================================
 // 렌더링
-// ================================
 let canvases = [];
 let idx = 0;
 
@@ -188,47 +175,39 @@ function render(){
   const label = canvasLabel(c);
   labelEl.textContent = label;
 
+  // 라벨 매핑 → 배열 매핑 → 빈 문자열
   textEl.innerHTML = textsByLabel[label] ?? pageTexts[idx] ?? "";
 
-  curEl.textContent = (idx + 1).toString();
-  jumpEl.value = idx.toString();
+  curEl.textContent = String(idx + 1);
+  jumpEl.value = String(idx);
 }
 
 function fillJump(){
   jumpEl.innerHTML = "";
   canvases.forEach((c, i) => {
     const opt = document.createElement("option");
-    opt.value = i.toString();
+    opt.value = String(i);
     opt.textContent = `${i+1}. ${canvasLabel(c)}`;
     jumpEl.appendChild(opt);
   });
 }
 
-
-// ================================
 // 이벤트
-// ================================
 document.getElementById("prevBtn").onclick = () => { idx = (idx - 1 + canvases.length) % canvases.length; render(); };
 document.getElementById("nextBtn").onclick = () => { idx = (idx + 1) % canvases.length; render(); };
-jumpEl.onchange = e => { idx = parseInt(e.target.value); render(); };
-
+jumpEl.onchange = e => { idx = parseInt(e.target.value, 10); render(); };
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft")  document.getElementById("prevBtn").click();
   if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
 });
 
-
-// ================================
-// 초기 실행
-// ================================
+// 초기화
 (async function init(){
   try {
     const manifest = await loadManifest(MANIFEST_URL);
     canvases = getCanvases(manifest);
-    totEl.textContent = canvases.length.toString();
-
+    totEl.textContent = String(canvases.length);
     while (pageTexts.length < canvases.length) pageTexts.push("");
-
     fillJump();
     render();
   } catch (err) {
