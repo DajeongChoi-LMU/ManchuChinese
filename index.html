@@ -1,58 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Manchu–Chinese Digital Texts</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<style>
-  body {
-    font-family: serif;
-    margin: 40px;
-    max-width: 1200px;
-  }
+  <style>
+    body {
+      font-family: serif;
+      margin: 40px;
+      max-width: 1200px;
+    }
 
-  nav a {
-    margin-right: 12px;
-    text-decoration: none;
-  }
+    nav a {
+      margin-right: 12px;
+      text-decoration: none;
+    }
 
-  /* === 2-column layout === */
-  .split {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr; /* 왼쪽 PDF / 오른쪽 텍스트 */
-    gap: 20px;
-    min-height: 80vh;
-  }
-
-  .pane {
-    border: 1px solid #ccc;
-    padding: 12px;
-    overflow: auto;
-    background: #fff;
-  }
-
-  .pdf {
-    width: 100%;
-    height: calc(100vh - 220px);
-    border: none;
-  }
-
-  /* 오른쪽 텍스트 */
-  .parallel {
-    line-height: 1.8;
-    font-family: "Noto Sans Mongolian", "Mongolian Baiti", serif;
-  }
-
-  /* 모바일에서는 위아래로 */
-  @media (max-width: 900px) {
+    /* === 2-column layout === */
     .split {
-      grid-template-columns: 1fr;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr; /* 왼쪽 PDF / 오른쪽 텍스트 */
+      gap: 20px;
+      min-height: 80vh;
     }
-    .pdf {
-      height: 60vh;
-    }
-  }
-</style>
 
+    .pane {
+      border: 1px solid #ccc;
+      padding: 12px;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .pdf {
+      width: 100%;
+      height: calc(100vh - 220px);
+      border: none;
+    }
+
+    /* 오른쪽 텍스트 */
+    .parallel {
+      line-height: 1.8;
+      font-family: "Noto Sans Mongolian", "Mongolian Baiti", serif;
+      /* 필요 시 세로쓰기 사용:
+         writing-mode: vertical-rl; text-orientation: mixed; */
+    }
+
+    /* 모바일에서는 위아래로 */
+    @media (max-width: 900px) {
+      .split { grid-template-columns: 1fr; }
+      .pdf { height: 60vh; }
+    }
+  </style>
 </head>
 <body>
 
@@ -67,11 +66,11 @@
 <h2 id="about">About</h2>
 <p>
 This pilot shows a side-by-side viewer: the PDF on the left and
-Manchu / Classical Chinese / English texts on the right.
+Manchu/Chinese/English text on the right.
 </p>
 
 <!-- ========== 2-Column Split Viewer ========== -->
-<section class="split">
+<section id="viewer" class="split">
 
   <!-- LEFT: PDF -->
   <div class="pane left">
@@ -432,10 +431,10 @@ bayaba niyalma sarkv de joborakv<br/>
 
 niyalma be sarakv de jobombi<br/>
 患不知人也<br/><br/>
-
-      The emperor addressed his ministers, saying:<br/>
-      “To govern the realm, one must take benevolence and righteousness as the foundation.”
     </div>
   </div>
 
 </section>
+
+</body>
+</html>
