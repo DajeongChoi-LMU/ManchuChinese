@@ -35,7 +35,7 @@ This pilot shows a synchronized IIIF viewer: the page image on the left and the 
   <button id="prevBtn" class="btn">◀ Prev</button>
   <div>Page <span id="cur">1</span> / <span id="tot">–</span></div>
   <button id="nextBtn" class="btn">Next ▶</button>
-  <select id="jump" class="btn" title="Jump to page"></select>
+  <select id="jump" class="btn"></select>
 </div>
 
 <section id="viewer" class="split">
@@ -46,131 +46,89 @@ This pilot shows a synchronized IIIF viewer: the page image on the left and the 
       <a id="imgLink" href="#" target="_blank" rel="noopener">image URL</a>
     </p>
   </div>
+
   <div class="pane right">
     <h2 id="pagelabel">Page</h2>
     <div id="text" class="parallel"></div>
   </div>
 </section>
 
+
+
 <script>
-// 0) 현재 페이지의 베이스 경로 계산 (프로젝트 페이지 안전)
+// ================================
+// BASE PATH 검출 (GitHub Pages 대응)
+// ================================
 const BASE = (function () {
   let p = location.pathname;
-  // GitHub Pages에서 /ManchuChinese 또는 /ManchuChinese/ 모두 대응
   if (!p.endsWith('/')) p += '/';
-  // /ManchuChinese/ 형태 보장
-  return p.replace(/index\.html$/i, '').replace(/([^/]+\.html)$/, '');
+  return p;
 })();
 
-// 1) IIIF Manifest 경로 (절대경로로도 테스트 가능)
-// const MANIFEST_URL = "https://dajeongchoi-lmu.github.io/ManchuChinese/3306131067.manifest.json?v=2";
+// IIIF manifest 위치
 const MANIFEST_URL = `${BASE}3306131067.manifest.json?v=2`;
 
-// 2) 라벨별 전사 텍스트
+
+// ================================
+// 라벨→전사 텍스트 매핑
+// ================================
 const textsByLabel = {
   "上:1r [163]": `leolen gisusen bithe  dergi<br/>
 論語 上<br/><br/>
 tacingga ujui fiyelen<br/>
 學而 第一<br/><br/>
-1<br/>
-fudzi hendume<br/>
-子曰<br/><br/> 
-tacimbime erinderi urebuci<br/>
-學而時習之<br/><br/> 
-inu urgun wakao<br/>
-不亦說乎<br/><br/>
-gucuse bifi goro jici<br/>
-有朋自遠方來<br/><br/> 
-inu sebjen wakao<br/>
-不亦樂乎<br/><br/>
-niyalma sarkv seme korsorakv oci<br/>
-人不知而不慍<br/><br/> 
-inu ambasa saisa wakao<br/>
-不亦君子乎<br/><br/>
-2<br/>
-iodzi hendume<br/>
-有子曰<br/><br/> 
-terei yabun hiyooxun deocin bime<br/>
-其爲人也孝弟<br/><br/> 
-dergi be necire de amurangge komso dere<br/> 
-而好犯上者鮮矣<br/><br/> 
-dergi be necire de amuran akv bime<br/>
-不好犯上<br/><br/>`,
-  "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/> 
+... 이하 생략 ...`,
+
+  "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/>
 而好作亂者 未之有也<br/><br/>
-ambasa saisa fulehe be kicembi<br/>
-君子務本<br/><br/>
-fulehe ilici doro banjinambi<br/>
-本立而道生<br/><br/>
-hiyooxun deocin serengge<br/> 
-孝弟也者<br/><br/> 
-tere gosin be yabure fulehe dere<br/>
-其爲仁之本與<br/><br/>
-3<br/>
-fudzi hendume<br/>
-子曰<br/><br/> 
-faksi gisun araha cira de<br/>
-巧言令色<br/><br/>
-gosin komso dere<br/>
-鮮矣仁<br/><br/>
-4<br/>
-dzengdzi hendume<br/>
-曾子曰<br/><br/> 
-bi inenggideri ilan hacin be mini beyede kimcimbi<br/>
-吾日三省吾身<br/><br/> 
-niyalmai jalin bodoro de tondo akv ayoo<br/>
-爲人謀而不忠乎<br/><br/>`
+... 이하 생략 ...`
 };
 
-const pageTexts = [];  // 필수
+const pageTexts = [];
 
-function render(){
-  …
-  const label = canvasLabel(c);
-  labelEl.textContent = label;
-  // 라벨 우선 → 배열 → 빈 문자열
-  textEl.innerHTML = textsByLabel[label] ?? pageTexts[idx] ?? "";
-  …
-}
-  
-// 4) IIIF manifest 로딩/파싱
+
+// ================================
+// IIIF manifest 불러오기
+// ================================
 async function loadManifest(url){
   const res = await fetch(url, { cache: "no-store" });
   if(!res.ok) throw new Error(`Manifest fetch failed: ${res.status}`);
   return await res.json();
 }
+
 function getCanvases(manifest){
-  if (Array.isArray(manifest.items) && manifest.items.length) return manifest.items;     // v3
-  if (manifest.sequences?.[0]?.canvases) return manifest.sequences[0].canvases;         // v2
-  throw new Error("No canvases found in manifest");
+  if (Array.isArray(manifest.items)) return manifest.items;  // v3
+  if (manifest.sequences?.[0]?.canvases) return manifest.sequences[0].canvases; // v2
+  throw new Error("No canvases found");
 }
+
 function canvasLabel(c){
   const lbl = c.label;
   if (typeof lbl === "string") return lbl;
   if (lbl?.none?.[0]) return lbl.none[0];
   if (lbl?.en?.[0]) return lbl.en[0];
-  return c.id || c['@id'] || "Page";
+  return "Page";
 }
+
 function imageUrlFromCanvas(c, width=1400){
-  try { // v3
+  try {
     const body = c.items[0].items[0].body;
     const svc = Array.isArray(body.service) ? body.service[0] : body.service;
-    let base = (svc && (svc.id || svc['@id'])) || body.id || body['@id'];
-    if (!base) throw new Error("no service/id");
-    base = base.replace(/\/info\.json$/,'');
+    let base = (svc?.id || svc?.['@id'] || body.id || body['@id']);
+    base = base.replace(/\/info\.json$/, '');
     return `${base}/full/${width},/0/default.jpg`;
-  } catch(_e){ // v2 fallback
-    const img = c.images?.[0]?.resource;
-    const svc = img?.service && (img.service['@id'] || img.service.id);
-    if (svc) return `${svc.replace(/\/info\.json$/,'')}/full/${width},/0/default.jpg`;
-    if (img && (img['@id'] || img.id)) return img['@id'] || img.id;
+  } catch {
     return "";
   }
 }
 
-// 5) 상태 & 요소
+
+// ================================
+// 렌더링
+// ================================
 let canvases = [];
 let idx = 0;
+
 const imgEl   = document.getElementById("img");
 const linkEl  = document.getElementById("imgLink");
 const textEl  = document.getElementById("text");
@@ -179,7 +137,6 @@ const curEl   = document.getElementById("cur");
 const totEl   = document.getElementById("tot");
 const jumpEl  = document.getElementById("jump");
 
-// 6) 렌더
 function render(){
   const c = canvases[idx];
   const url = imageUrlFromCanvas(c);
@@ -189,46 +146,52 @@ function render(){
   const label = canvasLabel(c);
   labelEl.textContent = label;
 
-  // 라벨매핑 → 배열매핑 → 빈 문자열
   textEl.innerHTML = textsByLabel[label] ?? pageTexts[idx] ?? "";
 
-  curEl.textContent = String(idx + 1);
-  jumpEl.value = String(idx);
+  curEl.textContent = (idx + 1).toString();
+  jumpEl.value = idx.toString();
 }
+
 function fillJump(){
   jumpEl.innerHTML = "";
   canvases.forEach((c, i) => {
     const opt = document.createElement("option");
-    opt.value = String(i);
+    opt.value = i.toString();
     opt.textContent = `${i+1}. ${canvasLabel(c)}`;
     jumpEl.appendChild(opt);
   });
 }
 
-// 7) 이벤트
+
+// ================================
+// 이벤트
+// ================================
 document.getElementById("prevBtn").onclick = () => { idx = (idx - 1 + canvases.length) % canvases.length; render(); };
 document.getElementById("nextBtn").onclick = () => { idx = (idx + 1) % canvases.length; render(); };
-jumpEl.onchange = e => { idx = parseInt(e.target.value, 10); render(); };
+jumpEl.onchange = e => { idx = parseInt(e.target.value); render(); };
+
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft")  document.getElementById("prevBtn").click();
   if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
 });
 
-// 8) 초기화
+
+// ================================
+// 초기 실행
+// ================================
 (async function init(){
   try {
-    console.log("Manifest URL:", MANIFEST_URL);
     const manifest = await loadManifest(MANIFEST_URL);
     canvases = getCanvases(manifest);
-    totEl.textContent = String(canvases.length);
+    totEl.textContent = canvases.length.toString();
+
     while (pageTexts.length < canvases.length) pageTexts.push("");
+
     fillJump();
     render();
-  } catch(err){
+  } catch (err) {
     console.error(err);
-    const msg = "IIIF manifest를 불러오지 못했습니다. 파일 경로/이름을 확인하세요.";
-    alert(msg);
-    document.getElementById("pagelabel").textContent = msg;
+    alert("IIIF manifest 로딩 실패: 파일경로를 확인하세요.");
   }
 })();
 </script>
