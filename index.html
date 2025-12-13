@@ -1,15 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manchu–Chinese Digital Texts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: serif; margin: 40px; max-width: 1200px; }
+    nav a { margin-right: 12px; text-decoration: none; }
+    .split { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; min-height: 80vh; }
+    .pane { border: 1px solid #ccc; padding: 12px; overflow: auto; background: #fff; }
+    .pageimg { max-width: 100%; height: auto; display: block; }
+    .parallel { line-height: 1.8; white-space: pre-wrap; }
+    .toolbar { display: flex; align-items: center; gap: 10px; margin: 10px 0 16px; }
+    .btn { padding: 6px 10px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<h1>Manchu–Traditional Chinese Digital Corpus (Pilot)</h1>
+
+<nav>
+  <a href="#about">About</a>
+  <a href="#viewer">Viewer</a>
+</nav>
+<hr>
+
+<h2 id="about">About</h2>
+<p>
+This pilot shows a synchronized IIIF viewer: the page image on the left and the corresponding text on the right.
+</p>
+
+<div class="toolbar">
+  <button id="prevBtn" class="btn">◀ Prev</button>
+  <div>Page <span id="cur">1</span> / <span id="tot">–</span></div>
+  <button id="nextBtn" class="btn">Next ▶</button>
+  <select id="jump" class="btn" title="Jump to page"></select>
+</div>
+
+<section id="viewer" class="split">
+  <div class="pane left">
+    <img id="img" class="pageimg" src="" alt="page image">
+    <p style="margin-top:8px;font-size:0.9em;color:#666;">
+      If the image does not load, open the source:
+      <a id="imgLink" href="#" target="_blank" rel="noopener">image URL</a>
+    </p>
+  </div>
+  <div class="pane right">
+    <h2 id="pagelabel">Page</h2>
+    <div id="text" class="parallel"></div>
+  </div>
+</section>
+
 <script>
-// --- 0) 현재 페이지의 베이스 경로 계산 (프로젝트 페이지 안전) ---
+// 0) 현재 페이지의 베이스 경로 계산 (프로젝트 페이지 안전)
 const BASE = (function () {
-  // 예) /ManchuChinese/  또는 /ManchuChinese/subdir/
-  const p = location.pathname;
-  return p.endsWith('/') ? p.slice(0, -1) : p.replace(/\/[^/]*$/, '');
+  let p = location.pathname;
+  // GitHub Pages에서 /ManchuChinese 또는 /ManchuChinese/ 모두 대응
+  if (!p.endsWith('/')) p += '/';
+  // /ManchuChinese/ 형태 보장
+  return p.replace(/index\.html$/i, '').replace(/([^/]+\.html)$/, '');
 })();
 
-// --- 1) IIIF Manifest 경로 ---
-const MANIFEST_URL = `${BASE}/3306131067.manifest.json?v=1`;
+// 1) IIIF Manifest 경로 (절대경로로도 테스트 가능)
+// const MANIFEST_URL = "https://dajeongchoi-lmu.github.io/ManchuChinese/3306131067.manifest.json?v=2";
+const MANIFEST_URL = `${BASE}3306131067.manifest.json?v=2`;
 
-// --- 2) 라벨별 전사 텍스트(드롭다운에 보이는 라벨과 정확히 일치해야 함) ---
+// 2) 라벨별 전사 텍스트
 const textsByLabel = {
   "上:1r [163]": `leolen gisusen bithe  dergi<br/>
 論語 上<br/><br/>
@@ -39,7 +96,6 @@ dergi be necire de amurangge komso dere<br/>
 而好犯上者鮮矣<br/><br/> 
 dergi be necire de amuran akv bime<br/>
 不好犯上<br/><br/>`,
-
   "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/> 
 而好作亂者 未之有也<br/><br/>
 ambasa saisa fulehe be kicembi<br/>
@@ -66,15 +122,18 @@ niyalmai jalin bodoro de tondo akv ayoo<br/>
 爲人謀而不忠乎<br/><br/>`
 };
 
-// --- 4) IIIF manifest 로딩/파싱 ---
+// 3) 배열 기반 전사 (없어도 최소 빈 배열 선언)
+const pageTexts = [];
+
+// 4) IIIF manifest 로딩/파싱
 async function loadManifest(url){
   const res = await fetch(url, { cache: "no-store" });
   if(!res.ok) throw new Error(`Manifest fetch failed: ${res.status}`);
   return await res.json();
 }
 function getCanvases(manifest){
-  if (Array.isArray(manifest.items) && manifest.items.length) return manifest.items;          // v3
-  if (manifest.sequences?.[0]?.canvases) return manifest.sequences[0].canvases;              // v2
+  if (Array.isArray(manifest.items) && manifest.items.length) return manifest.items;     // v3
+  if (manifest.sequences?.[0]?.canvases) return manifest.sequences[0].canvases;         // v2
   throw new Error("No canvases found in manifest");
 }
 function canvasLabel(c){
@@ -101,7 +160,7 @@ function imageUrlFromCanvas(c, width=1400){
   }
 }
 
-// --- 5) 상태 & 요소 참조 ---
+// 5) 상태 & 요소
 let canvases = [];
 let idx = 0;
 const imgEl   = document.getElementById("img");
@@ -112,7 +171,7 @@ const curEl   = document.getElementById("cur");
 const totEl   = document.getElementById("tot");
 const jumpEl  = document.getElementById("jump");
 
-// --- 6) 렌더 ---
+// 6) 렌더
 function render(){
   const c = canvases[idx];
   const url = imageUrlFromCanvas(c);
@@ -122,7 +181,7 @@ function render(){
   const label = canvasLabel(c);
   labelEl.textContent = label;
 
-  // 라벨 매핑 → 배열 순서 매핑 → 빈 문자열
+  // 라벨매핑 → 배열매핑 → 빈 문자열
   textEl.innerHTML = textsByLabel[label] ?? pageTexts[idx] ?? "";
 
   curEl.textContent = String(idx + 1);
@@ -138,7 +197,7 @@ function fillJump(){
   });
 }
 
-// --- 7) 이벤트 ---
+// 7) 이벤트
 document.getElementById("prevBtn").onclick = () => { idx = (idx - 1 + canvases.length) % canvases.length; render(); };
 document.getElementById("nextBtn").onclick = () => { idx = (idx + 1) % canvases.length; render(); };
 jumpEl.onchange = e => { idx = parseInt(e.target.value, 10); render(); };
@@ -147,18 +206,24 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
 });
 
-// --- 8) 초기화 ---
+// 8) 초기화
 (async function init(){
   try {
+    console.log("Manifest URL:", MANIFEST_URL);
     const manifest = await loadManifest(MANIFEST_URL);
     canvases = getCanvases(manifest);
     totEl.textContent = String(canvases.length);
-    while (pageTexts.length < canvases.length) pageTexts.push(""); // 안전 보정
+    while (pageTexts.length < canvases.length) pageTexts.push("");
     fillJump();
     render();
   } catch(err){
     console.error(err);
-    alert("IIIF manifest를 불러오지 못했습니다. 파일 경로/이름을 확인하세요.");
+    const msg = "IIIF manifest를 불러오지 못했습니다. 파일 경로/이름을 확인하세요.";
+    alert(msg);
+    document.getElementById("pagelabel").textContent = msg;
   }
 })();
 </script>
+
+</body>
+</html>
