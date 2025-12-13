@@ -1,222 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Manchu–Chinese Digital Texts</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <style>
-    body { font-family: serif; margin: 40px; max-width: 1200px; }
-    nav a { margin-right: 12px; text-decoration: none; }
-
-    /* === 2-column layout === */
-    .split {
-      display: grid;
-      grid-template-columns: 1.3fr 1fr; /* 왼쪽 이미지 / 오른쪽 텍스트 */
-      gap: 20px;
-      min-height: 80vh;
-    }
-    .pane {
-      border: 1px solid #ccc;
-      padding: 12px;
-      overflow: auto;
-      background: #fff;
-    }
-    .pageimg { max-width: 100%; height: auto; display: block; }
-
-    /* 오른쪽 텍스트 영역 */
-    .parallel {
-      line-height: 1.8;
-      font-family: "Noto Sans Mongolian", "Mongolian Baiti", serif;
-      white-space: pre-wrap; /* 엔터 그대로 줄바꿈 */
-      /* 만주어 세로쓰기 원하면 주석 해제
-      writing-mode: vertical-rl; text-orientation: mixed;
-      */
-    }
-
-    .toolbar { display: flex; align-items: center; gap: 10px; margin: 10px 0 16px; }
-    .btn { padding: 6px 10px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
-
-    @media (max-width: 900px) {
-      .split { grid-template-columns: 1fr; }
-    }
-  </style>
-</head>
-<body>
-
-<h1>Manchu–Traditional Chinese Digital Corpus (Pilot)</h1>
-
-<nav>
-  <a href="#about">About</a>
-  <a href="#viewer">Viewer</a>
-</nav>
-<hr>
-
-<h2 id="about">About</h2>
-<p>
-This pilot shows a synchronized IIIF viewer: the page image on the left and the corresponding text on the right.
-</p>
-
-<!-- ====== Toolbar (Prev/Next & Jump) ====== -->
-<div class="toolbar">
-  <button id="prevBtn" class="btn">◀ Prev</button>
-  <div>Page <span id="cur">1</span> / <span id="tot">–</span></div>
-  <button id="nextBtn" class="btn">Next ▶</button>
-  <select id="jump" class="btn" title="Jump to page"></select>
-</div>
-
-<!-- ========== 2-Column Split Viewer ========== -->
-<section id="viewer" class="split">
-
-  <!-- LEFT: IIIF/JPG 이미지 -->
-  <div class="pane left">
-    <img id="img" class="pageimg" src="" alt="page image">
-    <p style="margin-top:8px;font-size:0.9em;color:#666;">
-      If the image does not load, open the source:
-      <a id="imgLink" href="#" target="_blank" rel="noopener">image URL</a>
-    </p>
-  </div>
-
-  <!-- RIGHT: 동기화 텍스트 -->
-  <div class="pane right">
-    <h2 id="pagelabel">Page</h2>
-    <div id="text" class="parallel"></div>
-  </div>
-
-</section>
-
 <script>
-const MANIFEST_URL = "/ManchuChinese/3306131067.manifest.json?v=1";
-  
+// --- 0) 현재 페이지의 베이스 경로 계산 (프로젝트 페이지 안전) ---
+const BASE = (function () {
+  // 예) /ManchuChinese/  또는 /ManchuChinese/subdir/
+  const p = location.pathname;
+  return p.endsWith('/') ? p.slice(0, -1) : p.replace(/\/[^/]*$/, '');
+})();
+
+// --- 1) IIIF Manifest 경로 ---
+const MANIFEST_URL = `${BASE}/3306131067.manifest.json?v=1`;
+
+// --- 2) 라벨별 전사 텍스트(드롭다운에 보이는 라벨과 정확히 일치해야 함) ---
 const textsByLabel = {
   "上:1r [163]": `leolen gisusen bithe  dergi<br/>
 論語 上<br/><br/>
-
 tacingga ujui fiyelen<br/>
 學而 第一<br/><br/>
-
 1<br/>
 fudzi hendume<br/>
 子曰<br/><br/> 
-
 tacimbime erinderi urebuci<br/>
 學而時習之<br/><br/> 
-
 inu urgun wakao<br/>
 不亦說乎<br/><br/>
-
 gucuse bifi goro jici<br/>
 有朋自遠方來<br/><br/> 
-
 inu sebjen wakao<br/>
 不亦樂乎<br/><br/>
-
 niyalma sarkv seme korsorakv oci<br/>
 人不知而不慍<br/><br/> 
-
 inu ambasa saisa wakao<br/>
 不亦君子乎<br/><br/>
-
 2<br/>
 iodzi hendume<br/>
 有子曰<br/><br/> 
-
 terei yabun hiyooxun deocin bime<br/>
 其爲人也孝弟<br/><br/> 
-
 dergi be necire de amurangge komso dere<br/> 
 而好犯上者鮮矣<br/><br/> 
-
 dergi be necire de amuran akv bime<br/>
 不好犯上<br/><br/>`,
-  
 
   "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/> 
 而好作亂者 未之有也<br/><br/>
-
 ambasa saisa fulehe be kicembi<br/>
 君子務本<br/><br/>
-
 fulehe ilici doro banjinambi<br/>
 本立而道生<br/><br/>
-
 hiyooxun deocin serengge<br/> 
 孝弟也者<br/><br/> 
-
 tere gosin be yabure fulehe dere<br/>
 其爲仁之本與<br/><br/>
-
 3<br/>
 fudzi hendume<br/>
 子曰<br/><br/> 
-
 faksi gisun araha cira de<br/>
 巧言令色<br/><br/>
-
 gosin komso dere<br/>
 鮮矣仁<br/><br/>
-
 4<br/>
 dzengdzi hendume<br/>
 曾子曰<br/><br/> 
-
 bi inenggideri ilan hacin be mini beyede kimcimbi<br/>
 吾日三省吾身<br/><br/> 
-
 niyalmai jalin bodoro de tondo akv ayoo<br/>
 爲人謀而不忠乎<br/><br/>`
 };
-  
+
+// --- 3) 배열 기반 전사(선택). 최소한 빈 배열로 선언해야 오류 안 남 ---
+const pageTexts = [];  // 필요 시 pageTexts[162] = `...` 같은 식으로 추가
+
+// --- 4) IIIF manifest 로딩/파싱 ---
 async function loadManifest(url){
   const res = await fetch(url, { cache: "no-store" });
-  if(!res.ok) throw new Error("Manifest fetch failed");
+  if(!res.ok) throw new Error(`Manifest fetch failed: ${res.status}`);
   return await res.json();
 }
-
 function getCanvases(manifest){
-  // IIIF v3
-  if (Array.isArray(manifest.items) && manifest.items.length) return manifest.items;
-  // IIIF v2
-  if (manifest.sequences && manifest.sequences[0] && manifest.sequences[0].canvases) {
-    return manifest.sequences[0].canvases;
-  }
+  if (Array.isArray(manifest.items) && manifest.items.length) return manifest.items;          // v3
+  if (manifest.sequences?.[0]?.canvases) return manifest.sequences[0].canvases;              // v2
   throw new Error("No canvases found in manifest");
 }
-
 function canvasLabel(c){
   const lbl = c.label;
   if (typeof lbl === "string") return lbl;
-  if (lbl && lbl.none && lbl.none[0]) return lbl.none[0];
-  if (lbl && lbl.en && lbl.en[0]) return lbl.en[0];
+  if (lbl?.none?.[0]) return lbl.none[0];
+  if (lbl?.en?.[0]) return lbl.en[0];
   return c.id || c['@id'] || "Page";
 }
-
 function imageUrlFromCanvas(c, width=1400){
-  try {
-    // v3 typical
-    const ap = c.items[0];
-    const ann = ap.items[0];
-    const body = ann.body;
+  try { // v3
+    const body = c.items[0].items[0].body;
     const svc = Array.isArray(body.service) ? body.service[0] : body.service;
     let base = (svc && (svc.id || svc['@id'])) || body.id || body['@id'];
     if (!base) throw new Error("no service/id");
     base = base.replace(/\/info\.json$/,'');
     return `${base}/full/${width},/0/default.jpg`;
-  } catch(e){
-    // v2 fallback
-    const img = c.images && c.images[0] && c.images[0].resource;
-    const svc = img && img.service && (img.service['@id'] || img.service.id);
+  } catch(_e){ // v2 fallback
+    const img = c.images?.[0]?.resource;
+    const svc = img?.service && (img.service['@id'] || img.service.id);
     if (svc) return `${svc.replace(/\/info\.json$/,'')}/full/${width},/0/default.jpg`;
     if (img && (img['@id'] || img.id)) return img['@id'] || img.id;
-    console.warn("IIIF image resolve failed for canvas", c);
     return "";
   }
 }
 
-/* ===== 4) 렌더링 ===== */
+// --- 5) 상태 & 요소 참조 ---
 let canvases = [];
 let idx = 0;
-
 const imgEl   = document.getElementById("img");
 const linkEl  = document.getElementById("imgLink");
 const textEl  = document.getElementById("text");
@@ -225,17 +115,22 @@ const curEl   = document.getElementById("cur");
 const totEl   = document.getElementById("tot");
 const jumpEl  = document.getElementById("jump");
 
+// --- 6) 렌더 ---
 function render(){
   const c = canvases[idx];
   const url = imageUrlFromCanvas(c);
   imgEl.src = url;
   linkEl.href = url;
-  labelEl.textContent = canvasLabel(c);
-  textEl.textContent = pageTexts[idx] ?? ""; // 해당 페이지 텍스트가 없으면 빈칸
+
+  const label = canvasLabel(c);
+  labelEl.textContent = label;
+
+  // 라벨 매핑 → 배열 순서 매핑 → 빈 문자열
+  textEl.innerHTML = textsByLabel[label] ?? pageTexts[idx] ?? "";
+
   curEl.textContent = String(idx + 1);
   jumpEl.value = String(idx);
 }
-
 function fillJump(){
   jumpEl.innerHTML = "";
   canvases.forEach((c, i) => {
@@ -246,7 +141,7 @@ function fillJump(){
   });
 }
 
-/* ===== 5) 이벤트 ===== */
+// --- 7) 이벤트 ---
 document.getElementById("prevBtn").onclick = () => { idx = (idx - 1 + canvases.length) % canvases.length; render(); };
 document.getElementById("nextBtn").onclick = () => { idx = (idx + 1) % canvases.length; render(); };
 jumpEl.onchange = e => { idx = parseInt(e.target.value, 10); render(); };
@@ -255,16 +150,13 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
 });
 
-/* ===== 6) 초기화 ===== */
+// --- 8) 초기화 ---
 (async function init(){
   try {
     const manifest = await loadManifest(MANIFEST_URL);
     canvases = getCanvases(manifest);
     totEl.textContent = String(canvases.length);
-    // pageTexts가 canvases보다 짧아도 동작하도록 빈칸 채우기
-    if (pageTexts.length < canvases.length) {
-      while (pageTexts.length < canvases.length) pageTexts.push("");
-    }
+    while (pageTexts.length < canvases.length) pageTexts.push(""); // 안전 보정
     fillJump();
     render();
   } catch(err){
@@ -273,6 +165,3 @@ document.addEventListener("keydown", e => {
   }
 })();
 </script>
-
-</body>
-</html>
