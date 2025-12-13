@@ -122,9 +122,17 @@ niyalmai jalin bodoro de tondo akv ayoo<br/>
 爲人謀而不忠乎<br/><br/>`
 };
 
-// 3) 배열 기반 전사 (없어도 최소 빈 배열 선언)
-const pageTexts = [];
+const pageTexts = [];  // 필수
 
+function render(){
+  …
+  const label = canvasLabel(c);
+  labelEl.textContent = label;
+  // 라벨 우선 → 배열 → 빈 문자열
+  textEl.innerHTML = textsByLabel[label] ?? pageTexts[idx] ?? "";
+  …
+}
+  
 // 4) IIIF manifest 로딩/파싱
 async function loadManifest(url){
   const res = await fetch(url, { cache: "no-store" });
