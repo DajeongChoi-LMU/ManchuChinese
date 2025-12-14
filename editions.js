@@ -2,7 +2,7 @@
 window.EDITIONS = [
   // 1. 經書類(Confucian canon)
   { key:"zhuxi_jieyao_1676", title:"朱子節要 (1676)", year:"1676",
-    category:"經書類(Confucian canon)", manifest:"", textUrl:"" },
+    category:"經書類(Confucian canon)", manifest:"./manifests/3306130516.manifest.json", textUrl:"" },
   { key:"japan_sishu_1691", title:"新刻滿漢字四書 (1691)", year:"1691",
     category:"經書類(Confucian canon)", manifest:"https://dl.ndl.go.jp/api/iiif/2551975/manifest.json", textUrl:"" },
   { key:"xingli_1732", title:"性理 (1732)", year:"1732",
