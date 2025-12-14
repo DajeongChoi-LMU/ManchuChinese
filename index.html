@@ -158,14 +158,48 @@ const jumpEl  = document.getElementById("jump");
 function renderEditionList() {
   const box = document.getElementById("editionList");
   box.innerHTML = "";
-  window.EDITIONS.forEach(ed => {
-    const btn = document.createElement("button");
-    btn.className = "edition-btn" + (currentEdition && ed.key === currentEdition.key ? " active" : "");
-    btn.textContent = `${ed.year} · ${ed.title}`;
-    btn.onclick = () => switchEdition(ed);
-    box.appendChild(btn);
+
+  // 1) 카테고리별 그룹화
+  const groups = {};
+  (window.EDITIONS || []).forEach(ed => {
+    const cat = ed.category || "Others";
+    (groups[cat] ||= []).push(ed);
+  });
+
+  // 2) 카테고리 순회하며 섹션 렌더
+  Object.keys(groups).forEach(cat => {
+    // 섹션 헤더
+    const h = document.createElement("div");
+    h.style.cssText = "margin:10px 0 6px; font-weight:700;";
+    h.textContent = cat;
+    box.appendChild(h);
+
+    // 카테고리 내 판본 버튼들 (연도 오름차순 정렬)
+    groups[cat]
+      .sort((a,b) => (a.year||"").localeCompare(b.year||""))
+      .forEach(ed => {
+        const btn = document.createElement("button");
+        const isActive = (currentEdition && ed.key === currentEdition.key);
+        const hasManifest = !!(ed.manifest && ed.manifest.trim());
+
+        btn.className = "edition-btn" + (isActive ? " active" : "");
+        btn.textContent = `${ed.year} · ${ed.title}`;
+
+        if (hasManifest) {
+          btn.onclick = () => switchEdition(ed);
+        } else {
+          // manifest 없는 항목은 비활성(클릭 시 안내)
+          btn.style.opacity = "0.55";
+          btn.style.cursor = "not-allowed";
+          btn.title = "아직 업로드 전입니다.";
+          btn.onclick = () => alert("아직 업로드 전입니다. manifest를 채워 넣으면 활성화됩니다.");
+        }
+
+        box.appendChild(btn);
+      });
   });
 }
+</script>
 
 /* IIIF */
 async function loadManifest(url){
