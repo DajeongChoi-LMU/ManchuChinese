@@ -6,17 +6,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: serif; margin: 0; }
-    .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+    /* --- Sidebar (Accordion) --- */
     .sidebar {
       border-right: 1px solid #e5e5e5; background:#fafafa; padding:16px;
       position: sticky; top:0; height:100vh; overflow:auto;
     }
-    .brand { font-weight:700; margin-bottom:10px; }
+    .brand { font-weight:700; margin-bottom:12px; }
+    .cat { margin:10px 0; border:1px solid #ddd; border-radius: 12px; background:#fff; }
+    .cat-header {
+      width:100%; text-align:left; padding:10px 12px; font-weight:700; cursor:pointer;
+      background:#f3f3f3; border:0; border-bottom:1px solid #eee; border-radius:12px 12px 0 0;
+    }
+    .cat-items { padding:8px 10px; display:none; }
+    .cat.open .cat-items { display:block; }
+
     .edition-btn {
       display:block; width:100%; padding:8px 10px; margin:6px 0;
       border:1px solid #ddd; border-radius:10px; background:#fff; cursor:pointer; text-align:left;
     }
     .edition-btn.active { background:#eee; border-color:#ccc; }
+    .edition-btn[disabled] { opacity:.55; cursor:not-allowed; }
+
+    /* --- Main / Viewer --- */
     .main { padding:24px; max-width:1200px; margin:0 auto; }
     .toolbar { display:flex; align-items:center; gap:10px; margin:10px 0 16px; }
     .btn { padding:6px 10px; border:1px solid #ccc; background:#f7f7f7; cursor:pointer; }
@@ -24,15 +37,20 @@
     .pane { border:1px solid #ccc; padding:12px; overflow:auto; background:#fff; }
     .pageimg { max-width:100%; height:auto; display:block; }
     .parallel { line-height:1.8; white-space:pre-wrap; }
-    @media (max-width:900px){ .layout{grid-template-columns:1fr;} .sidebar{position:static;height:auto;} .split{grid-template-columns:1fr;} }
+
+    @media (max-width:900px){
+      .layout{grid-template-columns:1fr;}
+      .sidebar{position:static;height:auto;}
+      .split{grid-template-columns:1fr;}
+    }
   </style>
 </head>
 <body>
 
 <div class="layout">
-  <!-- 왼쪽: 판본 탭 -->
+  <!-- 왼쪽: 카테고리 아코디언 + 판본 목록 -->
   <aside class="sidebar">
-    <div class="brand">판본 선택</div>
+    <div class="brand">Manchu–Chinese bilingual editions of Confucian classics</div>
     <div id="editionList"></div>
   </aside>
 
@@ -47,7 +65,9 @@
     <hr>
 
     <h2 id="about">About</h2>
-    <p>This pilot shows a synchronized IIIF viewer: the page image on the left and the corresponding text on the right.</p>
+    <p>
+      This pilot shows a synchronized IIIF viewer: the page image on the left and the corresponding text on the right.
+    </p>
 
     <div class="toolbar">
       <button id="prevBtn" class="btn">◀ Prev</button>
@@ -72,14 +92,14 @@
   </main>
 </div>
 
-<!-- 1) 판본 목록(레포 루트에 editions.js) -->
+<!-- 판본 목록 (레포 루트의 editions.js) -->
 <script src="editions.js"></script>
 
-<!-- 2) 1755년(베를린) 판본에 대한 전사 매핑 -->
+<!-- 판본별 전사(예: 1755년 베를린 소장본) -->
 <script>
 const EDITION_TEXTS = {
   berlin_sishu_1755: {
-    pageTexts: [],   // 필요 시 인덱스 기반 채우기 가능
+    pageTexts: [],
     textsByLabel: {
       "上:1r [163]": `leolen gisusen bithe dergi<br/>
 論語 上<br/><br/>
@@ -109,7 +129,6 @@ dergi be necire de amurangge komso dere<br/>
 而好犯上者鮮矣<br/><br/>
 dergi be necire de amuran akv bime<br/>
 不好犯上<br/><br/>`,
-
       "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/>
 而好作亂者 未之有也<br/><br/>
 ambasa saisa fulehe be kicembi<br/>
@@ -136,11 +155,11 @@ niyalmai jalin bodoro de tondo akv ayoo<br/>
 爲人謀而不忠乎<br/><br/>`
     }
   }
-  // 다른 판본도 동일 구조로 추가 가능
+  // 필요 시 다른 판본도 같은 구조로 추가
 };
 </script>
 
-<!-- 3) 뷰어 로직 -->
+<!-- 뷰어 로직 -->
 <script>
 let canvases = [];
 let idx = 0;
@@ -154,62 +173,76 @@ const curEl   = document.getElementById("cur");
 const totEl   = document.getElementById("tot");
 const jumpEl  = document.getElementById("jump");
 
-/* 사이드바 */
+/* -------- 1) 아코디언 사이드바 렌더 -------- */
 function renderEditionList() {
   const box = document.getElementById("editionList");
   box.innerHTML = "";
 
-  // 1) 카테고리별 그룹화
+  // 카테고리 그룹화
   const groups = {};
   (window.EDITIONS || []).forEach(ed => {
     const cat = ed.category || "Others";
     (groups[cat] ||= []).push(ed);
   });
 
-  // 2) 카테고리 순회하며 섹션 렌더
-  Object.keys(groups).forEach(cat => {
-    // 섹션 헤더
-    const h = document.createElement("div");
-    h.style.cssText = "margin:10px 0 6px; font-weight:700;";
-    h.textContent = cat;
-    box.appendChild(h);
+  // 원하는 노출 순서
+  const orderedCats = [
+    "經書類(Confucian canon)",
+    "成語集類(Manchu–Chinese bilingual glossaries)",
+    "繙譯考試題(Questions and Answers from the Translation Examinations)"
+  ];
 
-    // 카테고리 내 판본 버튼들 (연도 오름차순 정렬)
-    groups[cat]
-      .sort((a,b) => (a.year||"").localeCompare(b.year||""))
+  // 우선 순서대로, 그 외 카테고리는 뒤에
+  const allCats = [...orderedCats, ...Object.keys(groups).filter(c => !orderedCats.includes(c))];
+
+  allCats.forEach(catTitle => {
+    if (!groups[catTitle]) return;
+
+    const sec = document.createElement("div");
+    sec.className = "cat open"; // 기본 펼침
+
+    const header = document.createElement("button");
+    header.className = "cat-header";
+    header.textContent = catTitle;
+    header.onclick = () => sec.classList.toggle("open");
+    sec.appendChild(header);
+
+    const items = document.createElement("div");
+    items.className = "cat-items";
+
+    groups[catTitle]
+      .sort((a,b)=>(a.year||"").localeCompare(b.year||""))
       .forEach(ed => {
         const btn = document.createElement("button");
         const isActive = (currentEdition && ed.key === currentEdition.key);
         const hasManifest = !!(ed.manifest && ed.manifest.trim());
 
         btn.className = "edition-btn" + (isActive ? " active" : "");
-        btn.textContent = `${ed.year} · ${ed.title}`;
+        btn.textContent = ed.title;
 
         if (hasManifest) {
           btn.onclick = () => switchEdition(ed);
         } else {
-          // manifest 없는 항목은 비활성(클릭 시 안내)
-          btn.style.opacity = "0.55";
-          btn.style.cursor = "not-allowed";
-          btn.title = "아직 업로드 전입니다.";
-          btn.onclick = () => alert("아직 업로드 전입니다. manifest를 채워 넣으면 활성화됩니다.");
+          btn.disabled = true;
+          btn.title = "아직 업로드 전입니다. manifest를 채우면 활성화됩니다.";
         }
-
-        box.appendChild(btn);
+        items.appendChild(btn);
       });
+
+    sec.appendChild(items);
+    box.appendChild(sec);
   });
 }
-</script>
 
-/* IIIF */
+/* -------- 2) IIIF 유틸 -------- */
 async function loadManifest(url){
   const res = await fetch(url, { cache: "no-store" });
   if(!res.ok) throw new Error(`Manifest fetch failed: ${res.status}`);
   return res.json();
 }
 function getCanvases(m){
-  if (Array.isArray(m.items) && m.items.length) return m.items;                 // v3
-  if (m.sequences?.[0]?.canvases) return m.sequences[0].canvases;               // v2
+  if (Array.isArray(m.items) && m.items.length) return m.items;   // v3
+  if (m.sequences?.[0]?.canvases) return m.sequences[0].canvases; // v2
   throw new Error("No canvases found in manifest");
 }
 function canvasLabel(c){
@@ -224,8 +257,9 @@ function imageUrlFromCanvas(c, width = 1400){
   try {
     const ap  = c.items?.[0];
     const ann = ap?.items?.[0];
-    body = Array.isArray(ann?.body) ? ann.body[0] : ann?.body;
+    body = Array.isArray(ann?.body) ? ann.body[0] : ann?.body; // Choice 대응
   } catch(_) {}
+
   const pickServiceBase = (obj) => {
     if (!obj) return null;
     const svc = Array.isArray(obj.service) ? obj.service[0] : obj.service;
@@ -233,9 +267,15 @@ function imageUrlFromCanvas(c, width = 1400){
     if (base && /\/info\.json$/.test(base)) base = base.replace(/\/info\.json$/, '');
     return base;
   };
+
+  // 1) 정석: Image API 서비스
   let base = pickServiceBase(body);
   if (base) return `${base}/full/${width},/0/default.jpg`;
+
+  // 2) 완성 이미지 파일
   if (body?.id && /\.(jpe?g|png)$/i.test(body.id)) return body.id;
+
+  // 3) IIIF v2 fallback
   const img = c.images?.[0]?.resource;
   if (img) {
     const base2 = pickServiceBase(img);
@@ -243,11 +283,14 @@ function imageUrlFromCanvas(c, width = 1400){
     const direct = img['@id'] || img.id;
     if (direct && /\.(jpe?g|png)$/i.test(direct)) return direct;
   }
+
+  // 4) 완성된 Image API 경로
   if (body?.id && /\/full\//.test(body.id)) return body.id;
+
   return "";
 }
 
-/* 렌더 */
+/* -------- 3) 렌더 -------- */
 function render(){
   const c = canvases[idx];
   const url = imageUrlFromCanvas(c);
@@ -258,7 +301,7 @@ function render(){
   const label = canvasLabel(c);
   labelEl.textContent = label;
 
-  // ★ 1755 베를린 판본 등, 현재 선택된 판본의 텍스트 사전에서 매핑
+  // 현재 판본의 전사 매핑 우선 사용
   const edTxt          = EDITION_TEXTS[currentEdition?.key] || {};
   const edPageTexts    = edTxt.pageTexts || [];
   const edTextsByLabel = edTxt.textsByLabel || {};
@@ -277,7 +320,7 @@ function fillJump(){
   });
 }
 
-/* 이벤트 */
+/* -------- 4) 이벤트 -------- */
 document.getElementById("prevBtn").onclick = () => { idx = (idx - 1 + canvases.length) % canvases.length; render(); };
 document.getElementById("nextBtn").onclick = () => { idx = (idx + 1) % canvases.length; render(); };
 jumpEl.onchange = e => { idx = parseInt(e.target.value, 10); render(); };
@@ -286,29 +329,30 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
 });
 
-/* 판본 전환 */
+/* -------- 5) 판본 전환 -------- */
 async function switchEdition(edition){
   currentEdition = edition;
-  renderEditionList();
+  renderEditionList(); // active 갱신
+
   const manifest = await loadManifest(edition.manifest);
   canvases = getCanvases(manifest);
   totEl.textContent = String(canvases.length);
+
   idx = 0;
   fillJump();
   render();
 
-  // textUrl을 별도로 쓰고 싶으면 여기에서 불러오기
+  // 필요 시 별도 textUrl 사용
   textEl.innerHTML = textEl.innerHTML || "";
-  if (edition.textUrl) {
+  if (edition.textUrl && !textEl.innerHTML.trim()) {
     try {
       const r = await fetch(edition.textUrl, { cache: "no-store" });
-      const html = await r.text();
-      if (!textEl.innerHTML.trim()) textEl.innerHTML = html;
+      textEl.innerHTML = await r.text();
     } catch(_) {}
   }
 }
 
-/* 초기화 */
+/* -------- 6) 초기화 -------- */
 (async function init(){
   if (!currentEdition) { alert("EDITIONS가 비어 있습니다."); return; }
   renderEditionList();
