@@ -4,7 +4,7 @@ window.EDITIONS = [
     title: "論語 上 (SBB, 1691?)",
     year: "1691",
     manifest: "https://dajeongchoi-lmu.github.io/ManchuChinese/3306131067.manifest.json",
-    textUrl: "" // 전사 파일이 있으면 texts/xxx.html 등으로 지정
+    textUrl: "" 
   },
   {
     key: "sample2",
