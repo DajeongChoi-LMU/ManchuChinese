@@ -26,5 +26,5 @@ window.EDITIONS = [
 
   // 3. 繙譯考試題(Questions and Answers from the Translation Examinations)
   { key:"fanyi_kaoshiti_1853", title:"繙譯考試題 (1853)", year:"1853",
-    category:"繙譯考試題(Questions and Answers from the Translation Examinations)", manifest:"", textUrl:"" },
+    category:"繙譯考試題(Questions and Answers from the Translation Examinations)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/3306130796.manifest.json", textUrl:"" },
 ];
