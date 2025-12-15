@@ -2,11 +2,11 @@
 window.EDITIONS = [
   // 1. 經書類(Confucian canon)
   { key:"zhuxi_jieyao_1676", title:"朱子節要 (1676)", year:"1676",
-    category:"經書類(Confucian canon)", manifest:"./manifests/3306130516.manifest.json", textUrl:"" },
+    category:"經書類(Confucian canon)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/3306130516.manifest.json", textUrl:"" },
   { key:"japan_sishu_1691", title:"新刻滿漢字四書 (1691)", year:"1691",
     category:"經書類(Confucian canon)", manifest:"https://dl.ndl.go.jp/api/iiif/2551975/manifest.json", textUrl:"" },
   { key:"xingli_1732", title:"性理 (1732)", year:"1732",
-    category:"經書類(Confucian canon)", manifest:"./manifests/1697233031.manifest.json", textUrl:"" },
+    category:"經書類(Confucian canon)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/1697233031.manifest.json", textUrl:"" },
   { key:"berlin_sishu_1755", title:"御製繙譯四書 (1755)", year:"1755",
     category:"經書類(Confucian canon)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/3306131067.manifest.json", textUrl:"" },
   { key:"fan_yi_xiaoxue_1851", title:"繙譯小學 (1851)", year:"1851",
