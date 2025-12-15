@@ -6,11 +6,11 @@ window.EDITIONS = [
   { key:"japan_sishu_1691", title:"新刻滿漢字四書 (1691)", year:"1691",
     category:"經書類(Confucian canon)", manifest:"https://dl.ndl.go.jp/api/iiif/2551975/manifest.json", textUrl:"" },
   { key:"xingli_1732", title:"性理 (1732)", year:"1732",
-    category:"經書類(Confucian canon)", manifest:"", textUrl:"" },
+    category:"經書類(Confucian canon)", manifest:"./manifests/1697233031.manifest.json", textUrl:"" },
   { key:"berlin_sishu_1755", title:"御製繙譯四書 (1755)", year:"1755",
     category:"經書類(Confucian canon)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/3306131067.manifest.json", textUrl:"" },
   { key:"fan_yi_xiaoxue_1851", title:"繙譯小學 (1851)", year:"1851",
-    category:"經書類(Confucian canon)", manifest:"", textUrl:"" },
+    category:"經書類(Confucian canon)", manifest:"./manifests/3306131040.manifest.json", textUrl:"" },
 
   // 2. 成語集類(Manchu–Chinese bilingual glossaries)
   { key:"jingwen_chengyu_1737", title:"滿漢經文成語 (1737)", year:"1737",
