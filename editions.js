@@ -18,11 +18,11 @@ window.EDITIONS = [
   { key:"qingwen_dianyao_1738", title:"淸文典要 (1738)", year:"1738",
     category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"", externalViewer:"https://viewer.nl.go.kr/main.wviewer?cno=CNTS-00047989273" },
   { key:"qingwen_dianyao_daquan_1793", title:"淸文典要大全 (1793)", year:"1793",
-    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"" },
+    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/3306131946.manifest.json", textUrl:"" },
   { key:"liubu_chengyu_1842", title:"滿漢六部成語 (1842)", year:"1842",
-    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"" },
+    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/1692734946.manifest.json", textUrl:"" },
   { key:"chengyu_jiyao_1891", title:"成語輯要 (1891)", year:"1891",
-    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"" },
+    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"", externalViewer:"chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://archive.wul.waseda.ac.jp/kosho/ho05/ho05_00791/ho05_00791.pdf" },
 
   // 3. 繙譯考試題(Questions and Answers from the Translation Examinations)
   { key:"fanyi_kaoshiti_1853", title:"繙譯考試題 (1853)", year:"1853",
