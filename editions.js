@@ -14,9 +14,9 @@ window.EDITIONS = [
 
   // 2. 成語集類(Manchu–Chinese bilingual glossaries)
   { key:"jingwen_chengyu_1737", title:"滿漢經文成語 (1737)", year:"1737",
-    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"" },
+    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"https://dajeongchoi-lmu.github.io/ManchuChinese/3306131563.manifest.json", textUrl:"" },
   { key:"qingwen_dianyao_1738", title:"淸文典要 (1738)", year:"1738",
-    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"" },
+    category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"", externalViewer:"https://viewer.nl.go.kr/main.wviewer?cno=CNTS-00047989273" },
   { key:"qingwen_dianyao_daquan_1793", title:"淸文典要大全 (1793)", year:"1793",
     category:"成語集類(Manchu–Chinese bilingual glossaries)", manifest:"", textUrl:"" },
   { key:"liubu_chengyu_1842", title:"滿漢六部成語 (1842)", year:"1842",
