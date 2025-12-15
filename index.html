@@ -37,6 +37,7 @@
     .pane { border:1px solid #ccc; padding:12px; overflow:auto; background:#fff; }
     .pageimg { max-width:100%; height:auto; display:block; }
     .parallel { line-height:1.8; white-space:pre-wrap; }
+    .pdfframe { width:100%; height:calc(100vh - 220px); border:0; }
 
     @media (max-width:900px){
       .layout{grid-template-columns:1fr;}
@@ -77,13 +78,9 @@
     </div>
 
     <section id="viewer" class="split">
-      <div class="pane left">
-        <img id="img" class="pageimg" src="" alt="page image">
-        <p style="margin-top:8px;font-size:0.9em;color:#666;">
-          If the image does not load, open the source:
-          <a id="imgLink" href="#" target="_blank" rel="noopener">image URL</a>
-        </p>
-      </div>
+      <!-- ✨ 왼쪽 뷰: 모드(IIIF / PDF)에 따라 동적으로 채움 -->
+      <div class="pane left" id="leftPane"></div>
+
       <div class="pane right">
         <h2 id="pagelabel">Page</h2>
         <div id="text" class="parallel"></div>
@@ -102,57 +99,57 @@ const EDITION_TEXTS = {
     pageTexts: [],
     textsByLabel: {
       "上:1r [163]": `leolen gisusen bithe dergi<br/>
-論語 上<br/><br/>
+論語 上<br/>
 tacingga ujui fiyelen<br/>
-學而 第一<br/><br/>
+學而 第一<br/>
 1<br/>
 fudzi hendume<br/>
-子曰<br/><br/>
+子曰<br/>
 tacimbime erinderi urebuci<br/>
-學而時習之<br/><br/>
+學而時習之<br/>
 inu urgun wakao<br/>
-不亦說乎<br/><br/>
+不亦說乎<br/>
 gucuse bifi goro jici<br/>
-有朋自遠方來<br/><br/>
+有朋自遠方來<br/>
 inu sebjen wakao<br/>
-不亦樂乎<br/><br/>
+不亦樂乎<br/>
 niyalma sarkv seme korsorakv oci<br/>
-人不知而不慍<br/><br/>
+人不知而不慍<br/>
 inu ambasa saisa wakao<br/>
-不亦君子乎<br/><br/>
+不亦君子乎<br/>
 2<br/>
 iodzi hendume<br/>
-有子曰<br/><br/>
+有子曰<br/>
 terei yabun hiyooxun deocin bime<br/>
-其爲人也孝弟<br/><br/>
+其爲人也孝弟<br/>
 dergi be necire de amurangge komso dere<br/>
-而好犯上者鮮矣<br/><br/>
+而好犯上者鮮矣<br/>
 dergi be necire de amuran akv bime<br/>
 不好犯上<br/><br/>`,
       "上:1v [164]": `facuhvn be deribure de amurangga akv kai<br/>
-而好作亂者 未之有也<br/><br/>
+而好作亂者 未之有也<br/>
 ambasa saisa fulehe be kicembi<br/>
-君子務本<br/><br/>
+君子務本<br/>
 fulehe ilici doro banjinambi<br/>
-本立而道生<br/><br/>
+本立而道生<br/>
 hiyooxun deocin serengge<br/>
-孝弟也者<br/><br/>
+孝弟也者<br/>
 tere gosin be yabure fulehe dere<br/>
-其爲仁之本與<br/><br/>
+其爲仁之本與<br/>
 3<br/>
 fudzi hendume<br/>
-子曰<br/><br/>
+子曰<br/>
 faksi gisun araha cira de<br/>
-巧言令色<br/><br/>
+巧言令色<br/>
 gosin komso dere<br/>
-鮮矣仁<br/><br/>
+鮮矣仁<br/>
 4<br/>
 dzengdzi hendume<br/>
-曾子曰<br/><br/>
+曾子曰<br/>
 bi inenggideri ilan hacin be mini beyede kimcimbi<br/>
-吾日三省吾身<br/><br/>
+吾日三省吾身<br/>
 niyalmai jalin bodoro de tondo akv ayoo<br/>
-爲人謀而不忠乎<br/><br/>`
+爲人謀而不忠乎<br/>`
     }
   }
   // 필요 시 다른 판본도 같은 구조로 추가
@@ -165,41 +162,61 @@ let canvases = [];
 let idx = 0;
 let currentEdition = (window.EDITIONS && window.EDITIONS[0]) || null;
 
-const imgEl   = document.getElementById("img");
-const linkEl  = document.getElementById("imgLink");
+const leftPane = document.getElementById("leftPane");
 const textEl  = document.getElementById("text");
 const labelEl = document.getElementById("pagelabel");
 const curEl   = document.getElementById("cur");
 const totEl   = document.getElementById("tot");
 const jumpEl  = document.getElementById("jump");
 
-/* -------- 1) 아코디언 사이드바 렌더 -------- */
+/* -------- (A) 왼쪽 뷰 모드 전환 -------- */
+function showIiifImageMode() {
+  leftPane.innerHTML = `
+    <img id="img" class="pageimg" src="" alt="page image">
+    <p style="margin-top:8px;font-size:0.9em;color:#666;">
+      If the image does not load, open the source:
+      <a id="imgLink" href="#" target="_blank" rel="noopener">image URL</a>
+    </p>
+  `;
+}
+function showPdfMode(pdfUrl) {
+  leftPane.innerHTML = `
+    <object data="${pdfUrl}" type="application/pdf" class="pdfframe">
+      <p style="margin-top:8px;font-size:0.9em;color:#666;">
+        PDF embed is blocked.
+        <a href="${pdfUrl}" target="_blank" rel="noopener">Open in a new tab</a>
+      </p>
+    </object>
+  `;
+  labelEl.textContent = "PDF view";
+  totEl.textContent = "–";
+  curEl.textContent = "1";
+  jumpEl.innerHTML = "";
+}
+
+/* -------- (B) 사이드바 렌더 -------- */
 function renderEditionList() {
   const box = document.getElementById("editionList");
   box.innerHTML = "";
 
-  // 카테고리 그룹화
   const groups = {};
   (window.EDITIONS || []).forEach(ed => {
     const cat = ed.category || "Others";
     (groups[cat] ||= []).push(ed);
   });
 
-  // 원하는 노출 순서
   const orderedCats = [
     "經書類(Confucian canon)",
     "成語集類(Manchu–Chinese bilingual glossaries)",
     "繙譯考試題(Questions and Answers from the Translation Examinations)"
   ];
-
-  // 우선 순서대로, 그 외 카테고리는 뒤에
   const allCats = [...orderedCats, ...Object.keys(groups).filter(c => !orderedCats.includes(c))];
 
   allCats.forEach(catTitle => {
     if (!groups[catTitle]) return;
 
     const sec = document.createElement("div");
-    sec.className = "cat open"; // 기본 펼침
+    sec.className = "cat open";
 
     const header = document.createElement("button");
     header.className = "cat-header";
@@ -215,16 +232,16 @@ function renderEditionList() {
       .forEach(ed => {
         const btn = document.createElement("button");
         const isActive = (currentEdition && ed.key === currentEdition.key);
-        const hasManifest = !!(ed.manifest && ed.manifest.trim());
+        const hasSource = (ed.manifest && ed.manifest.trim()) || (ed.pdf && ed.pdf.trim());
 
         btn.className = "edition-btn" + (isActive ? " active" : "");
         btn.textContent = ed.title;
 
-        if (hasManifest) {
+        if (hasSource) {
           btn.onclick = () => switchEdition(ed);
         } else {
           btn.disabled = true;
-          btn.title = "아직 업로드 전입니다. manifest를 채우면 활성화됩니다.";
+          btn.title = "아직 업로드 전입니다. (manifest 또는 pdf가 필요)";
         }
         items.appendChild(btn);
       });
@@ -234,7 +251,7 @@ function renderEditionList() {
   });
 }
 
-/* -------- 2) IIIF 유틸 -------- */
+/* -------- (C) IIIF 유틸 -------- */
 async function loadManifest(url){
   const res = await fetch(url, { cache: "no-store" });
   if(!res.ok) throw new Error(`Manifest fetch failed: ${res.status}`);
@@ -290,13 +307,15 @@ function imageUrlFromCanvas(c, width = 1400){
   return "";
 }
 
-/* -------- 3) 렌더 -------- */
+/* -------- (D) 렌더 -------- */
 function render(){
   const c = canvases[idx];
   const url = imageUrlFromCanvas(c);
-  imgEl.onerror = null;
-  imgEl.src = url;
-  linkEl.href = url;
+
+  const imgEl  = document.getElementById("img");
+  const linkEl = document.getElementById("imgLink");
+  if (imgEl)  imgEl.src  = url;
+  if (linkEl) linkEl.href = url;
 
   const label = canvasLabel(c);
   labelEl.textContent = label;
@@ -320,7 +339,7 @@ function fillJump(){
   });
 }
 
-/* -------- 4) 이벤트 -------- */
+/* -------- (E) 이벤트 -------- */
 document.getElementById("prevBtn").onclick = () => { idx = (idx - 1 + canvases.length) % canvases.length; render(); };
 document.getElementById("nextBtn").onclick = () => { idx = (idx + 1) % canvases.length; render(); };
 jumpEl.onchange = e => { idx = parseInt(e.target.value, 10); render(); };
@@ -329,21 +348,34 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
 });
 
-/* -------- 5) 판본 전환 -------- */
+/* -------- (F) 판본 전환 -------- */
 async function switchEdition(edition){
   currentEdition = edition;
   renderEditionList(); // active 갱신
 
+  const hasManifest = edition.manifest && edition.manifest.trim();
+  const hasPdf = edition.pdf && edition.pdf.trim();
+
+  // PDF-only 판본
+  if (!hasManifest && hasPdf) {
+    canvases = [];
+    idx = 0;
+    showPdfMode(edition.pdf);
+    textEl.innerHTML = ""; // 필요 시 설명/전사 채우기
+    return;
+  }
+
+  // IIIF 판본
   const manifest = await loadManifest(edition.manifest);
   canvases = getCanvases(manifest);
   totEl.textContent = String(canvases.length);
 
   idx = 0;
+  showIiifImageMode();   // 이미지 뷰로 교체
   fillJump();
   render();
 
   // 필요 시 별도 textUrl 사용
-  textEl.innerHTML = textEl.innerHTML || "";
   if (edition.textUrl && !textEl.innerHTML.trim()) {
     try {
       const r = await fetch(edition.textUrl, { cache: "no-store" });
@@ -352,7 +384,7 @@ async function switchEdition(edition){
   }
 }
 
-/* -------- 6) 초기화 -------- */
+/* -------- (G) 초기화 -------- */
 (async function init(){
   if (!currentEdition) { alert("EDITIONS가 비어 있습니다."); return; }
   renderEditionList();
